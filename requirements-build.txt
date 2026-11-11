@@ -1,0 +1,6 @@
+pymupdf==2.1
+pillow==13.0.0
+numpy==1.26.4
+fonttools==4.68.0
+sv_ttk==2.6.1
+pyinstaller==6.22.3

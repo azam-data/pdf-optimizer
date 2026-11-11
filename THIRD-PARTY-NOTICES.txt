@@ -1,0 +1,9 @@
+PDF Optimizer bundles these components (unmodified):
+- Python 3.12 (PSF License)                     - Tcl/Tk 8.6 (BSD-style)
+- PyMuPDF / MuPDF (GNU AGPL v3, Artifex)        - Pillow (MIT-CMU)
+- NumPy + OpenBLAS (BSD)                        - fontTools (MIT)
+- sv-ttk Sun Valley theme (MIT)                 - jbig2enc (Apache 2.0) + Leptonica (BSD-2)
+- Tesseract OCR (inside MuPDF) + tessdata_fast English model (Apache 2.0)
+- Microsoft Visual C++ runtime DLLs (Microsoft redistributable)
+Note: PyMuPDF/MuPDF is AGPL. Internal use is fine; if you distribute this program outside
+your organisation, its source code must be made available (or a commercial MuPDF licence used).

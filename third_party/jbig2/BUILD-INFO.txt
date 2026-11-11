@@ -1,0 +1,8 @@
+jbig2enc commit 4553595aa094cad7d55c4efc9657ea31db23c742 (Sun Oct 18 17:15:10 2026 +0200)
+leptonica commit 6edccb242f5b80ffd277fcfc6f966ddf97972ef6 (Fri Nov 6 13:58:59 2026 -0800)
+
+Static Windows x64 build (MinGW-w64), no installer, no DLLs beyond Windows system DLLs.
+Reads PBM/BMP input. Used by the PDF Optimizer notebooks in lossless generic-region mode only (jbig2 -p),
+so no symbol substitution ("6 becomes 8") can occur.
+Place jbig2.exe in the same folder as the notebooks.
+e8d1e8159827dd60dd23a492131feb9f22598c329a94e478d40c835322c0e5f2  jbig2_win/jbig2.exe
