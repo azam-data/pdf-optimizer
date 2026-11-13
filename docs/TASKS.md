@@ -45,7 +45,8 @@
 ### Batch 1: quality and missed savings
 - [x] Q4 [auto] [baseline]
   - `_needs_ocr` now skips a page only when its existing text covers at least 10% of the page area; a stamped page number no longer blocks OCR.
-- [ ] Q8 [auto] [baseline] keep the OCR text layer unless the file grows by more than 10%; counters 0 when the original is kept
+- [x] Q8 [auto] [baseline] keep the OCR text layer unless the file grows by more than 10%; counters 0 when the original is kept
+  - A "no gain" result is now kept when OCR added a text layer and the file grew at most 10%; `keep_original` zeroes scan/OCR/image counters.
 - [ ] M1 [auto] [baseline]
 - [ ] M3 [auto] [baseline]
 - [ ] Q3 [opus] [baseline]
