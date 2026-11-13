@@ -12,7 +12,8 @@
 ## Phase 1: bugs and small fixes
 - [x] E1 [auto]
   - plan_folder now uses _is_within (normcase + realpath + commonpath + samefile), so a differently-cased output inside the input is rejected; xfail removed. The check rejects nested folders, so the walk never visits the output folder.
-- [ ] E2 [auto]
+- [x] E2 [auto]
+  - optimize_pdf catches OSError on the final os.replace and on the fallback copy and returns status "failed (output in use)"; run_folder's last-resort copy does the same, so the batch continues. New test tests/test_batch_locked.py; notebooks regenerated.
 - [ ] E3 [auto]
 - [ ] E4 [auto]
 - [ ] R3 [auto]
