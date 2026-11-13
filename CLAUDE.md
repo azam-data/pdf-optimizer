@@ -35,7 +35,7 @@ Users compress confidential bank PDFs, so correctness beats size.
 11. Never run --update-baseline in an [auto] task. If sizes must change, write the task ID and reason in docs/BLOCKED.md and stop.
 
 ## Tool use in unattended runs
-- Run Python only as `python -m pytest ...`, `python tools/<script>.py` or `python tests/<script>.py`.
+- Run Python only as `python -m pytest ...`, `python tools/build_notebooks.py` or `python tests/make_samples.py` (no other scripts; check things with pytest instead).
   Never use `python3`, `.venv/bin/python`, `source`, or inline `python -c` / heredocs.
-- Put helper scripts in tools/ (committed), never in /tmp.
+- Do not create other scripts to run, and never write to /tmp.
 - To inspect files (including notebooks) use the Read and Grep tools, not shell scripts.

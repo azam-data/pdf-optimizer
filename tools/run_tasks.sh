@@ -9,7 +9,7 @@ fi
 trap 'rmdir "$LOCK"' EXIT
 mkdir -p logs
 MODEL="sonnet"; MAX_ATTEMPTS=3; last=""; attempts=0
-TOOLS='Read,Edit,Write,Glob,Grep,Bash(python -m pytest:*),Bash(python tools/:*),Bash(python tests/:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*)'
+TOOLS='Read,Edit,Write,Glob,Grep,Bash(python -m pytest:*),Bash(python tools/build_notebooks.py),Bash(python tools/build_notebooks.py:*),Bash(python tests/make_samples.py),Bash(python tests/make_samples.py:*),Bash(git status:*),Bash(git diff:*),Bash(git log:*),Bash(git add:*),Bash(git commit:*)'
 now() { date '+%Y-%m-%d %H:%M'; }
 while true; do
   line=$(grep -m1 -E '^- \[ \] ' docs/TASKS.md)
