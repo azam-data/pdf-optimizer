@@ -28,7 +28,8 @@
   - GUI checkbox "Keep fonts unchanged" and CLI --keep-fonts set optimize_fonts=False (no subsetting or hinting removal); defaults unchanged; new tests/test_keep_fonts.py.
 - [x] R2 [auto]
   - jbig2 now gets a relative file name (cwd = temp dir) and a failed run is logged as a warning; notebooks regenerated.
-- [ ] R4 [auto]
+- [x] R4 [auto]
+  - Cancel now acts after each OCR page and during the final page check (new "verify" progress stage, temp files cleaned); saved window position is clamped on-screen (clamp_geometry); skip-existing ignores zero-byte outputs; added a >260-char path test (passes); notebooks regenerated.
 - [ ] Q4 [you]
 - [ ] Q8 [you]
 
