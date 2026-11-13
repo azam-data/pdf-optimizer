@@ -59,7 +59,8 @@
   - Scan mode now keeps blocks with mid-tone ink (60-88% of paper, away from dark strokes) as picture blocks, even small ones; new scan_pencil_note sample converts (404383 -> 77452 bytes) and keeps its pencil note and faint stamp.
 - [x] R1 [opus]
   - Scan mode skips pages over 40 MP at scan_dpi with a clear log reason (normal pass still runs), computes the Sauvola threshold in 512-row strips (same result, far less memory), frees the decoded scan early, and logs "out of memory" instead of a bare MemoryError.
-- [ ] M2 [opus] [baseline]
+- [x] M2 [opus] [baseline]
+  - CMYK images (DeviceCMYK or ICC N=4, Decode null or Adobe-inverted) are re-encoded as 4:4:4 CMYK JPEG with the inverted Decode; colours checked by decode and render; cmyk_image.pdf 751389 -> 643138 bytes.
 - [ ] CHECK1 [you] test the CI build on real documents on Windows; read docs/DECISIONS.md and logs/baseline_changes.txt
 
 ### Batch 2: size and features
