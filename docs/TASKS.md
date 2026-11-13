@@ -55,7 +55,8 @@
   - Verification renders at 72 dpi and fails on the worst 0.5-inch tile (signed diff > 8); rebuilt scans compare ink maps (> 2% of a tile lost/added fails); scan_pastel_chart is now kept as the original.
 - [x] Q1 [opus] [baseline]
   - Scan mode treats blocks that are mostly light-tinted or clearly coloured (not ink) as pictures; picture-area colour cells get their own colour, faint grey text stays grey; scan_pastel_chart now converts (269854 -> 70969 bytes) and passes verification.
-- [ ] Q2 [opus] [baseline]
+- [x] Q2 [opus] [baseline]
+  - Scan mode now keeps blocks with mid-tone ink (60-88% of paper, away from dark strokes) as picture blocks, even small ones; new scan_pencil_note sample converts (404383 -> 77452 bytes) and keeps its pencil note and faint stamp.
 - [ ] R1 [opus]
 - [ ] M2 [opus] [baseline]
 - [ ] CHECK1 [you] test the CI build on real documents on Windows; read docs/DECISIONS.md and logs/baseline_changes.txt
