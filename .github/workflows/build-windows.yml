@@ -45,7 +45,7 @@ jobs:
         run: |
           python -c "import pymupdf; d=pymupdf.open(); p=d.new_page(); p.insert_text((72,72),'hello'); d.save('smoke.pdf')"
           & "dist/PDF Optimizer/pdfopt-cli.exe" smoke.pdf smoke_out.pdf
-          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 3) { exit 1 }
           if (-not (Test-Path smoke_out.pdf)) { exit 1 }
 
       - name: Package

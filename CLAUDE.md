@@ -31,11 +31,19 @@ Users compress confidential bank PDFs, so correctness beats size.
 8. After changing pdfopt_core.py, regenerate the notebooks.
 9. Commit message: "<TASK ID>: <what changed>".
 10. When done, tick the task in docs/TASKS.md. If blocked, add a line to docs/BLOCKED.md
-    that starts with the task ID, then the reason; commit it and stop. Never guess on scan-mode quality.
-11. Never run --update-baseline in an [auto] task. If sizes must change, write the task ID and reason in docs/BLOCKED.md and stop.
+    that starts with the task ID, then the reason; commit it and stop.
 
 ## Tool use in unattended runs
 - Run Python only as `python -m pytest ...`, `python tools/build_notebooks.py` or `python tests/make_samples.py` (no other scripts; check things with pytest instead).
   Never use `python3`, `.venv/bin/python`, `source`, or inline `python -c` / heredocs.
 - Do not create other scripts to run, and never write to /tmp.
 - To inspect files (including notebooks) use the Read and Grep tools, not shell scripts.
+
+## Batch mode (queue v2)
+- Only a task whose line in docs/TASKS.md contains [baseline] may update tests/baseline.json, with
+  `python -m pytest tests/test_baseline.py --update-baseline`. Do it only after the fix is done and all other
+  tests pass. In the commit message, list which samples changed and why. Other tasks must never change it.
+- Do not stop for judgement calls. Choose the most conservative option (keep more content, accept a smaller
+  saving), add one line to docs/DECISIONS.md starting with the task ID (what you chose, the alternative, why),
+  commit it with the task, and carry on. Use docs/BLOCKED.md only when the tests cannot be made to pass.
+- When a known-bug test marked xfail for your task starts passing, remove its xfail mark.

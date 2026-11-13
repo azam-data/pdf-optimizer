@@ -31,36 +31,46 @@
   - jbig2 now gets a relative file name (cwd = temp dir) and a failed run is logged as a warning; notebooks regenerated.
 - [x] R4 [auto]
   - Cancel now acts after each OCR page and during the final page check (new "verify" progress stage, temp files cleaned); saved window position is clamped on-screen (clamp_geometry); skip-existing ignores zero-byte outputs; added a >260-char path test (passes); notebooks regenerated.
-- [ ] Q4 [you]
-- [ ] Q8 [you]
 
 ## Phase 2: scan-mode quality
-- [ ] Q3 [you]
-- [ ] Q1 [you]
-- [ ] Q2 [you]
-- [ ] R1 [you]
 
 ## Phase 3: missed savings
-- [ ] M1 [you]
-- [ ] M3 [you]
-- [ ] M2 [you]
 
 ## Phase 4: size
-- [ ] S5 [auto]
-- [ ] S3 [auto]
-- [ ] S4 [auto]
-- [ ] S2 [auto]
-- [ ] S1 [you]
 
 ## Phase 5: features (reorder or delete lines as you like)
+
+## Queue v2 (batched). [auto] = Sonnet, [opus] = Opus, [baseline] = may update tests/baseline.json, [you] = runner stops
+
+### Batch 1: quality and missed savings
+- [ ] Q4 [auto] [baseline]
+- [ ] Q8 [auto] [baseline] keep the OCR text layer unless the file grows by more than 10%; counters 0 when the original is kept
+- [ ] M1 [auto] [baseline]
+- [ ] M3 [auto] [baseline]
+- [ ] Q3 [opus] [baseline]
+- [ ] Q1 [opus] [baseline]
+- [ ] Q2 [opus] [baseline]
+- [ ] R1 [opus]
+- [ ] M2 [opus] [baseline]
+- [ ] CHECK1 [you] test the CI build on real documents on Windows; read docs/DECISIONS.md and logs/baseline_changes.txt
+
+### Batch 2: size and features
+- [ ] S5 [auto]
+- [ ] S3 [auto] also extend the CI smoke test: run the built exe with --ocr on the scan_grey sample; require exit code 0, a smaller file and a text layer
+- [ ] S4 [auto]
+- [ ] S2 [auto]
 - [ ] F3 [auto]
 - [ ] F2 [auto]
-- [ ] F1 [you]
+- [ ] F1 [opus]
 - [ ] F4 [auto]
 - [ ] F7 [auto]
 - [ ] F8 [auto]
 - [ ] F14 [auto]
 - [ ] F6 [auto]
 - [ ] F12 [auto]
-- [ ] F5 [you]
-- [ ] F9 [you]
+- [ ] F5 [opus]
+- [ ] F9 [opus]
+- [ ] CHECK2 [you] final review and release
+
+### Deferred
+- [ ] S1 [you] NumPy without OpenBLAS: needs repeated Windows CI rounds; do last, if at all
