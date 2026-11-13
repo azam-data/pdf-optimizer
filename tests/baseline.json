@@ -4,10 +4,10 @@
     "notes": {
       "cmyk_image.pdf": "M2: CMYK images are skipped, so the file is copied",
       "palette_image.pdf": "M3: palette (Indexed) images are skipped, so the file is copied",
-      "scan_bw_tiny.pdf": "already optimal, copied; Q8: OCR and images_changed counted although the original was copied",
+      "scan_bw_tiny.pdf": "already optimal; Q8: kept because the OCR text layer adds <10%",
       "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",
       "scan_pastel_chart.pdf": "Q1: pastel fills are erased by scan mode; baseline records the current (wrong) result",
-      "scan_stencil_mask.pdf": "M1: stencil-mask scans are skipped; Q8: OCR counted although the original was copied"
+      "scan_stencil_mask.pdf": "M1: stencil mask is re-encoded losslessly, keeping /ImageMask"
     },
     "ocr_available": true,
     "pymupdf": "2.1",
@@ -147,11 +147,11 @@
     },
     "scan_stencil_mask.pdf": {
       "identical_to_input": false,
-      "images_changed": 0,
+      "images_changed": 1,
       "ocr_pages": 1,
       "scan_pages": 0,
       "size_in": 27327,
-      "size_out": 29599,
+      "size_out": 29142,
       "status": "optimized"
     }
   }

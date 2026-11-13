@@ -47,7 +47,8 @@
   - `_needs_ocr` now skips a page only when its existing text covers at least 10% of the page area; a stamped page number no longer blocks OCR.
 - [x] Q8 [auto] [baseline] keep the OCR text layer unless the file grows by more than 10%; counters 0 when the original is kept
   - A "no gain" result is now kept when OCR added a text layer and the file grew at most 10%; `keep_original` zeroes scan/OCR/image counters.
-- [ ] M1 [auto] [baseline]
+- [x] M1 [auto] [baseline]
+  - 1-bit stencil masks (default Decode) are now classed bitonal and re-encoded losslessly; the /ImageMask flag is kept.
 - [ ] M3 [auto] [baseline]
 - [ ] Q3 [opus] [baseline]
 - [ ] Q1 [opus] [baseline]

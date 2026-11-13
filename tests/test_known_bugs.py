@@ -55,11 +55,25 @@ def test_Q4_scan_with_page_number_needs_ocr(samples_dir):
         doc.close()
 
 
-@pytest.mark.xfail(strict=True, reason="M1: stencil-mask scans are skipped")
 def test_M1_stencil_mask_image_is_processed(samples_dir, tmp_path):
     r = core.optimize_pdf(str(samples_dir / "scan_stencil_mask.pdf"), str(tmp_path / "out.pdf"),
                           dict(scan_mode="auto"))
-    assert r["images_changed"] >= 1
+    assert r["images_changed"] >= 1, (r["status"], r["note"], r["image_log"])
+
+
+def test_M1_stencil_mask_keeps_flag_and_rendering(samples_dir, tmp_path):
+    src, dst = samples_dir / "scan_stencil_mask.pdf", tmp_path / "out.pdf"
+    core.optimize_pdf(str(src), str(dst), dict(scan_mode="off", ocr=False), jbig2_exe=None)
+    a, b = pymupdf.open(src), pymupdf.open(dst)
+    try:
+        x = b.get_page_images(0)[0][0]
+        assert b.xref_get_key(x, "ImageMask")[1] == "true"
+        pa = a[0].get_pixmap(dpi=50, colorspace=pymupdf.csGRAY)
+        pb = b[0].get_pixmap(dpi=50, colorspace=pymupdf.csGRAY)
+        assert (pa.width, pa.height) == (pb.width, pb.height)
+        assert abs(sum(pa.samples) / len(pa.samples) - sum(pb.samples) / len(pb.samples)) < 2
+    finally:
+        a.close(); b.close()
 
 
 def test_Q8_ocr_text_survives_when_file_did_not_shrink(runs):

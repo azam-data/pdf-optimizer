@@ -26,7 +26,7 @@ NAMES = sorted(make_samples.SAMPLES)
 NOTES = {
     "cmyk_image.pdf": "M2: CMYK images are skipped, so the file is copied",
     "palette_image.pdf": "M3: palette (Indexed) images are skipped, so the file is copied",
-    "scan_stencil_mask.pdf": "M1: stencil-mask scans are skipped; Q8: kept because the OCR text layer adds <10%",
+    "scan_stencil_mask.pdf": "M1: stencil mask is re-encoded losslessly, keeping /ImageMask",
     "scan_bw_tiny.pdf": "already optimal; Q8: kept because the OCR text layer adds <10%",
     "scan_pastel_chart.pdf": "Q1: pastel fills are erased by scan mode; baseline records the current (wrong) result",
     "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",

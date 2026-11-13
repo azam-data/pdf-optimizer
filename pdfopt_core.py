@@ -157,7 +157,10 @@ def _classify(doc, xref):
     if _key(doc, xref, "Subtype")[1] != "/Image":
         return ("skip", "not an image")
     if _key(doc, xref, "ImageMask")[1] == "true":
-        return ("skip", "stencil mask")
+        dec = _key(doc, xref, "Decode")
+        if dec[0] != "null" and dec[1].replace(" ", "") != "[01]":
+            return ("skip", "stencil mask with custom Decode")
+        return "bitonal"        # 1-bit stencil: re-encoded losslessly, /ImageMask flag is kept
     if _key(doc, xref, "Mask")[0] == "array":
         return ("skip", "colour-key mask")
     kind = _colorspace_kind(doc, xref)
@@ -686,10 +689,13 @@ def _best_bitonal(img1, jbig2_exe):
 
 def _process_bitonal(doc, xref, eff_dpi, s, jbig2_exe):
     pix = pymupdf.Pixmap(doc, xref)
-    if pix.alpha:
-        pix = pymupdf.Pixmap(pix, 0)
-    a = np.frombuffer(pix.samples, np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, 0]
-    src = Image.fromarray(np.where(a >= 128, 255, 0).astype(np.uint8))
+    if pix.colorspace is None:      # stencil mask: MuPDF returns coverage only (255 = painted = sample 0)
+        a = 255 - np.frombuffer(pix.samples, np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, 0]
+    else:
+        if pix.alpha:
+            pix = pymupdf.Pixmap(pix, 0)
+        a = np.frombuffer(pix.samples, np.uint8).reshape(pix.height, pix.width, pix.n)[:, :, 0]
+    src =Image.fromarray(np.where(a >= 128, 255, 0).astype(np.uint8))
     action = "re-encoded"
     tgt = s["target_dpi_bitonal"]
     if eff_dpi > tgt * s["downsample_factor"]:
