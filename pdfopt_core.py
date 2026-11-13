@@ -258,11 +258,18 @@ def _encode_ccitt(img1):
 
 
 def _encode_jbig2(img1, exe):
+    """Run jbig2 in a temp dir with a relative file name, so a non-English user name in the
+    temp path cannot break it. Returns the data, or None (and logs why)."""
     with tempfile.TemporaryDirectory() as td:
-        p = os.path.join(td, "page.pbm")       # PBM: readable by every jbig2 build
-        img1.save(p)
-        r = subprocess.run([exe, "-p", p], capture_output=True, timeout=300, cwd=td, creationflags=_NO_WINDOW)
-        return r.stdout if r.returncode == 0 and r.stdout else None
+        name = "page.pbm"                      # PBM: readable by every jbig2 build
+        img1.save(os.path.join(td, name))
+        r = subprocess.run([exe, "-p", name], capture_output=True, timeout=300, cwd=td, creationflags=_NO_WINDOW)
+        if r.returncode == 0 and r.stdout:
+            return r.stdout
+        import logging
+        logging.getLogger("pdfopt").warning(
+            "JBIG2 encoder failed (exit %s); using CCITT/Flate instead", r.returncode)
+        return None
 
 
 
