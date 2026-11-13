@@ -153,13 +153,16 @@ class App:
         self.ocr_var = tk.BooleanVar(value=False)
         ttk.Checkbutton(opt, text="Make scanned pages searchable (OCR, English) — slower",
                         variable=self.ocr_var).grid(row=1, column=0, columnspan=4, sticky="w", pady=(10, 0))
+        self.fonts_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(opt, text="Keep fonts unchanged (easier to edit text later in Acrobat; slightly larger)",
+                        variable=self.fonts_var).grid(row=2, column=0, columnspan=4, sticky="w", pady=(6, 0))
         self.skip_var = tk.BooleanVar(value=False)
         self.skip_chk = ttk.Checkbutton(opt, text="Skip files already in the output folder (resume)",
                                         variable=self.skip_var)
-        self.skip_chk.grid(row=2, column=0, columnspan=4, sticky="w", pady=(6, 0))
+        self.skip_chk.grid(row=3, column=0, columnspan=4, sticky="w", pady=(6, 0))
         jb = "JBIG2: built in" if self.jbig2 else "JBIG2: not found (CCITT G4 used instead)"
         oc = "OCR: English built in" if self.tessdata else "OCR: language file not found"
-        ttk.Label(opt, text=f"{jb}    ·    {oc}", foreground=MUTED).grid(row=3, column=0, columnspan=4,
+        ttk.Label(opt, text=f"{jb}    ·    {oc}", foreground=MUTED).grid(row=4, column=0, columnspan=4,
                                                                          sticky="w", pady=(8, 0))
 
         # actions
@@ -208,6 +211,7 @@ class App:
         self.grain_var.set(dict((v, k) for k, v in GRAIN_CHOICES).get(st.get("grain", 2), "Medium"))
         self.skip_var.set(bool(st.get("skip_existing", False)))
         self.ocr_var.set(bool(st.get("ocr", False)))
+        self.fonts_var.set(bool(st.get("keep_fonts", False)))
         self._mode_changed(initial=True)
 
     def _store(self):
@@ -215,6 +219,7 @@ class App:
                        scan=dict(SCAN_CHOICES)[self.scan_var.get()],
                        grain=dict(GRAIN_CHOICES)[self.grain_var.get()],
                        skip_existing=self.skip_var.get(), ocr=self.ocr_var.get(),
+                       keep_fonts=self.fonts_var.get(),
                        geometry=self.root.geometry())
         key = "single" if self.mode.get() == "single" else "folder"
         self.st[f"{key}_in"], self.st[f"{key}_out"] = self.in_var.get(), self.out_var.get()
@@ -263,9 +268,12 @@ class App:
 
     # ---------- run
     def _settings(self):
-        return {"scan_mode": dict(SCAN_CHOICES)[self.scan_var.get()],
-                "scan_despeckle": dict(GRAIN_CHOICES)[self.grain_var.get()],
-                "ocr": self.ocr_var.get()}
+        s = {"scan_mode": dict(SCAN_CHOICES)[self.scan_var.get()],
+             "scan_despeckle": dict(GRAIN_CHOICES)[self.grain_var.get()],
+             "ocr": self.ocr_var.get()}
+        if self.fonts_var.get():
+            s["optimize_fonts"] = False
+        return s
 
     def _start(self):
         src, dst = self.in_var.get().strip().strip('"'), self.out_var.get().strip().strip('"')

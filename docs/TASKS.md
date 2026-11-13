@@ -24,7 +24,8 @@
   - OCR words that are half or more "?" or mostly symbols are dropped before the text layer is written (_clean_ocr_words); new tests/test_ocr_filter.py; notebooks regenerated.
 - [x] Q6 [auto]
   - Output files get a custom /PdfOptimizer key in the Info dict; when present, JPEG images are left untouched on re-runs (_is_marked/_set_mark); new tests/test_rerun_marker.py; notebooks regenerated.
-- [ ] Q7 [auto]
+- [x] Q7 [auto]
+  - GUI checkbox "Keep fonts unchanged" and CLI --keep-fonts set optimize_fonts=False (no subsetting or hinting removal); defaults unchanged; new tests/test_keep_fonts.py.
 - [ ] R2 [auto]
 - [ ] R4 [auto]
 - [ ] Q4 [you]

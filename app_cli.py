@@ -2,7 +2,7 @@
 
   pdfopt-cli input.pdf [output.pdf]            single file (default output: <name>_optimized.pdf)
   pdfopt-cli INPUT_FOLDER OUTPUT_FOLDER         folder mode (mirror + report)
-  options: --scan auto|bw|off   --grain 0-3   --ocr   --skip-existing
+  options: --scan auto|bw|off   --grain 0-3   --ocr   --keep-fonts   --skip-existing
   --json prints the single-file result as JSON (with "exit_code").
 Exit code: 0 = optimized, 3 = original kept (copied), 1 = error, 2 = bad arguments.
 Folder mode returns 0 unless the run itself fails (see the report for per-file status).
@@ -22,10 +22,13 @@ def main(argv=None):
     p.add_argument("--scan", choices=["auto", "bw", "off"], default="auto", help="scanned-page mode (default auto)")
     p.add_argument("--grain", type=int, choices=[0, 1, 2, 3], default=2, help="grain removal 0-3 (default 2)")
     p.add_argument("--ocr", action="store_true", help="add a searchable English text layer to scanned pages")
+    p.add_argument("--keep-fonts", action="store_true", help="leave fonts unchanged (no subsetting or hinting removal)")
     p.add_argument("--skip-existing", action="store_true", help="folder mode: skip files already in output")
     p.add_argument("--json", action="store_true", help="single file: print the result as one JSON object")
     a = p.parse_args(argv)
     settings = {"scan_mode": a.scan, "scan_despeckle": a.grain, "ocr": a.ocr}
+    if a.keep_fonts:
+        settings["optimize_fonts"] = False
     jb = find_jbig2()
 
     if os.path.isdir(a.input):
