@@ -20,7 +20,8 @@
   - pdfopt-cli single-file mode exits 0 optimized, 3 original kept, 1 error; new `--json` prints the result with `exit_code`.
 - [x] R3 [auto]
   - optimize_pdf copies PDFs that forbid modification ("copied (protected)") or that MuPDF had to repair ("copied (damaged)") unchanged; new tests/test_protected_damaged.py; notebooks regenerated.
-- [ ] Q5 [auto]
+- [x] Q5 [auto]
+  - OCR words that are half or more "?" or mostly symbols are dropped before the text layer is written (_clean_ocr_words); new tests/test_ocr_filter.py; notebooks regenerated.
 - [ ] Q6 [auto]
 - [ ] Q7 [auto]
 - [ ] R2 [auto]
