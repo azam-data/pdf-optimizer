@@ -885,6 +885,10 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
             return keep_original("copied (password protected)", "remove the password first")
         if not doc.is_pdf:
             return keep_original("copied (not a PDF)", "")
+        if not (doc.permissions & pymupdf.PDF_PERM_MODIFY):
+            return keep_original("copied (protected)", "owner has disallowed changes; file left as it was")
+        if doc.is_repaired:
+            return keep_original("copied (damaged)", "file needed repair; left as it was")
         if s["skip_signed"] and doc.get_sigflags() > 0:
             return keep_original("copied (digitally signed)", "rewriting would invalidate the signature")
 
