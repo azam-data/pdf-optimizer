@@ -1,0 +1,58 @@
+name: Build Windows app
+
+on:
+  workflow_dispatch:          # "Run workflow" button in the Actions tab
+  release:
+    types: [published]        # publishing a release attaches the zip to it
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: python -m pip install -r requirements-build.txt
+
+      - name: Fetch OCR model and VC++ runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force third_party/tessdata, third_party/vcruntime | Out-Null
+          Invoke-WebRequest https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata -OutFile third_party/tessdata/eng.traineddata
+          Copy-Item "$env:SystemRoot\System32\msvcp140.dll","$env:SystemRoot\System32\vcruntime140.dll","$env:SystemRoot\System32\vcruntime140_1.dll" third_party/vcruntime/
+
+      - name: Build
+        run: python -m PyInstaller --noconfirm --clean pdf_optimizer.spec
+
+      - name: Smoke test
+        shell: pwsh
+        run: |
+          python -c "import pymupdf; d=pymupdf.open(); p=d.new_page(); p.insert_text((72,72),'hello'); d.save('smoke.pdf')"
+          & "dist/PDF Optimizer/pdfopt-cli.exe" smoke.pdf smoke_out.pdf
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path smoke_out.pdf)) { exit 1 }
+
+      - name: Package
+        shell: pwsh
+        run: |
+          Copy-Item APP_README.txt "dist/PDF Optimizer/README.txt"
+          Copy-Item THIRD-PARTY-NOTICES.txt "dist/PDF Optimizer/"
+          Compress-Archive -Path "dist/PDF Optimizer" -DestinationPath PDF_Optimizer_Windows_portable.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PDF_Optimizer_Windows_portable
+          path: PDF_Optimizer_Windows_portable.zip
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: PDF_Optimizer_Windows_portable.zip

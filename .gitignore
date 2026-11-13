@@ -1,0 +1,17 @@
+# build output
+build/
+dist/
+__pycache__/
+*.pyc
+# fetched at build time (see build.bat / workflow)
+third_party/tessdata/
+third_party/vcruntime/
+# local state
+settings.json
+*_report_*.csv
+# never commit documents you tested with
+*.pdf
+.ipynb_checkpoints/
+
+.venv/
+logs/
