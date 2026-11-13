@@ -49,7 +49,8 @@
   - A "no gain" result is now kept when OCR added a text layer and the file grew at most 10%; `keep_original` zeroes scan/OCR/image counters.
 - [x] M1 [auto] [baseline]
   - 1-bit stencil masks (default Decode) are now classed bitonal and re-encoded losslessly; the /ImageMask flag is kept.
-- [ ] M3 [auto] [baseline]
+- [x] M3 [auto] [baseline]
+  - Oversized Indexed (palette) images are downsampled and stay palette images (original colours only, Flate); palette_image.pdf 97895 -> 40068 bytes.
 - [ ] Q3 [opus] [baseline]
 - [ ] Q1 [opus] [baseline]
 - [ ] Q2 [opus] [baseline]
