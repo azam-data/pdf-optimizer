@@ -82,6 +82,8 @@ def test_jbig2_optional(samples_dir, tmp_path):
     """JBIG2 path: only where a jbig2 executable exists. Output must still be valid and not larger."""
     exe = core.find_jbig2()
     if not exe:
+        if os.environ.get("CI"):
+            pytest.fail("no jbig2 executable found: CI must run the JBIG2 test")
         pytest.skip("no jbig2 executable found")
     src = samples_dir / "scan_bw.pdf"
     r = core.optimize_pdf(str(src), str(tmp_path / "j.pdf"), dict(SETTINGS, use_jbig2=True), jbig2_exe=exe)
