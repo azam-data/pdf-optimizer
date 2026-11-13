@@ -449,9 +449,18 @@ def _scan_convert(doc, xref, kind, dpi, s, jbig2_exe):
     flat = (~ink & (tinted | (sat > 30))).astype(np.float32)
     flat_share = flat[:h2, :w2].reshape(h2 // B, B, w2 // B, B).mean(axis=(1, 3))
     pic_blk = (mid_share > 0.5) | (flat_share > 0.5)
+    # --- legibility guard 2: mid-tone ink (pencil notes, faint stamps, grey text at 60-88% of
+    # paper brightness) away from dark strokes cannot be shown in 1 bit (it vanishes or turns
+    # black): blocks that hold some of it are kept as a picture, even a small one
+    near = max(5, int(round(out_dpi / 100)) * 2 + 1)                   # anti-aliased edges of dark ink
+    faint_ink = (L >= 0.6 * paper) & (L < 0.88 * paper) & (_box_count(L < 0.6 * paper, near) == 0)
+    faint_ink &= _neighbours(faint_ink) >= 2                           # strokes, not lone noise pixels
+    faint_share = faint_ink[:h2, :w2].reshape(h2 // B, B, w2 // B, B).mean(axis=(1, 3))
+    faint_blk = faint_share > 0.02
+    pic_blk |= faint_blk
     pic_blocks = int(pic_blk.sum())
     pic = None                       # pixels kept as a picture (logos, seals, photos), not binarized
-    if pic_blocks >= s["scan_picture_min_blocks"]:
+    if pic_blocks >= s["scan_picture_min_blocks"] or faint_blk.any():
         share = pic_blocks / pic_blk.size
         if share > s["scan_max_picture_share"]:
             return None, f"mostly picture ({share:.0%} of the page)"

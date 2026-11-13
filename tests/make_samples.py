@@ -190,6 +190,28 @@ def make_scan_pastel_chart(path):
     _save(doc, path)
 
 
+PENCIL_BOX = (700, 1250, 1180, 1420)   # px at 150 dpi: pencil note area
+STAMP_BOX = (120, 1230, 520, 1630)     # px at 150 dpi: faint stamp area
+
+
+@sample("Scan with dark text plus a pencil note and a faint stamp (60-88% of paper brightness). Mid-tone ink must not vanish (Q2).")
+def make_scan_pencil_note(path):
+    img = _paper("RGB", 245)
+    d = ImageDraw.Draw(img)
+    _text_lines(d, (25, 25, 25), n=28, seed=17)
+    x0, y0, x1, y1 = PENCIL_BOX                                               # pencil: thin mid-grey strokes
+    d.text((x0 + 10, y0 + 10), "checked against ledger", font=_font(30), fill=(175, 175, 180))
+    d.text((x0 + 10, y0 + 60), "ok - A.K. 14/03", font=_font(30), fill=(175, 175, 180))
+    pts = [(x0 + 20 + i * 7, y0 + 130 + int(14 * np.sin(i / 2.5))) for i in range(60)]
+    d.line(pts, fill=(200, 200, 205), width=2)                               # very light pencil (82%)
+    x0, y0, x1, y1 = STAMP_BOX                                                # faint (worn) stamp
+    d.ellipse((x0 + 20, y0 + 20, x1 - 20, y1 - 20), outline=(215, 165, 170), width=6)
+    d.ellipse((x0 + 60, y0 + 60, x1 - 60, y1 - 60), outline=(215, 165, 170), width=3)
+    d.text((x0 + 120, y0 + 180), "VERIFIED", font=_font(34), fill=(215, 165, 170))
+    doc, _ = _new(path, _jpeg(_speckle(img, 17, 3), 88))
+    _save(doc, path)
+
+
 @sample("Black-and-white scan stored as an ImageMask (stencil mask). Engine currently skips it; must be handled (M1).")
 def make_scan_stencil_mask(path):
     img = _paper("L")

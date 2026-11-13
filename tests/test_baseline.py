@@ -29,6 +29,7 @@ NOTES = {
     "scan_stencil_mask.pdf": "M1: stencil mask is re-encoded losslessly, keeping /ImageMask",
     "scan_bw_tiny.pdf": "already optimal; Q8: kept because the OCR text layer adds <10%",
     "scan_pastel_chart.pdf": "Q1: pastel fills and highlighter are kept in the picture layer; scan mode passes verification",
+    "scan_pencil_note.pdf": "Q2: pencil note and faint stamp (mid-tone ink) are kept in the picture layer",
     "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",
 }
 

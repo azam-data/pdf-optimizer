@@ -7,6 +7,7 @@
       "scan_bw_tiny.pdf": "already optimal; Q8: kept because the OCR text layer adds <10%",
       "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",
       "scan_pastel_chart.pdf": "Q1: pastel fills and highlighter are kept in the picture layer; scan mode passes verification",
+      "scan_pencil_note.pdf": "Q2: pencil note and faint stamp (mid-tone ink) are kept in the picture layer",
       "scan_stencil_mask.pdf": "M1: stencil mask is re-encoded losslessly, keeping /ImageMask"
     },
     "ocr_available": true,
@@ -34,7 +35,7 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 414695,
-      "size_out": 80071,
+      "size_out": 80139,
       "status": "optimized"
     },
     "many_fonts.pdf": {
@@ -142,7 +143,16 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 269854,
-      "size_out": 70969,
+      "size_out": 67789,
+      "status": "optimized"
+    },
+    "scan_pencil_note.pdf": {
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
+      "scan_pages": 1,
+      "size_in": 404383,
+      "size_out": 77452,
       "status": "optimized"
     },
     "scan_stencil_mask.pdf": {
