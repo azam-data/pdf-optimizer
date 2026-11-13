@@ -72,9 +72,12 @@ DEFAULTS = dict(
     remove_xmp=False,        # XMP metadata: keep by default (PDF/A needs it)
     skip_signed=True,        # digitally signed PDFs are copied unchanged (rewriting breaks signatures)
     verify_pages=True,       # render before/after and compare every page
-    verify_dpi=40,
-    verify_font_max_mae=0.5, # font pass must render (almost) pixel-identical
+    verify_dpi=72,
+    verify_font_max_mae=0.5, # font pass must render (almost) pixel-identical (worst tile: 4x this)
     verify_max_mae=12.0,     # max mean abs. pixel difference (0-255) per page; catches gross errors (inverted, wrong colours, missing)
+    verify_tile_in=0.5,      # pages are also compared in 0.5-inch tiles (half-overlapping)...
+    verify_tile_max_mae=8.0, # ...and fail when any one tile differs by more than this (a small missing item)
+    verify_ink_max_share=0.02,  # rebuilt scans: fail if ink lost or added covers > 2% of any tile
     min_file_gain=0.01,      # if the result is not at least 1% smaller, keep the original
 )
 
@@ -891,8 +894,36 @@ def _optimize_images(doc, s, jbig2_exe, log, progress=None):
     return stats
 
 
+def _tile_means(v, t):
+    """Mean of v over t x t tiles that overlap by half (stride t//2), via an integral image."""
+    h, w = v.shape
+    if h < t or w < t:
+        return np.array([float(v.mean())])
+    I = np.pad(v.astype(np.float64), ((1, 0), (1, 0))).cumsum(0).cumsum(1)
+    st = max(1, t // 2)
+    ys = np.r_[np.arange(0, h - t + 1, st), h - t]
+    xs = np.r_[np.arange(0, w - t + 1, st), w - t]
+    Y, X = np.ix_(ys, xs)
+    return (I[Y + t, X + t] - I[Y, X + t] - I[Y + t, X] + I[Y, X]) / float(t * t)
+
+
+def _ink_map(g):
+    """Dark marks (text, lines, stamps) on a grey page, relative to its paper tone."""
+    paper = float(np.percentile(g, 90))
+    return g < paper * 0.75
+
+
+def _grow(b):
+    """Boolean map grown by one pixel (tolerates a one-pixel shift between renders)."""
+    return b | (_neighbours(b) > 0)
+
+
 def _pages_match(path_a, path_b, s, max_mae=None, check_text=False, scan_pages=(), progress=None):
+    """Render both files at verify_dpi and compare page by page. Normal pages fail on the worst
+    tile (a small missing item), not only on the page average; rebuilt scans compare ink maps."""
     max_mae = s["verify_max_mae"] if max_mae is None else max_mae
+    max_tile = s["verify_tile_max_mae"] if max_mae == s["verify_max_mae"] else max_mae * 4
+    t = max(8, int(round(s["verify_tile_in"] * s["verify_dpi"])))
     a, b = pymupdf.open(path_a), pymupdf.open(path_b)
     try:
         if a.page_count != b.page_count:
@@ -905,21 +936,39 @@ def _pages_match(path_a, path_b, s, max_mae=None, check_text=False, scan_pages=(
             pb = b[i].get_pixmap(dpi=s["verify_dpi"], colorspace=pymupdf.csGRAY, annots=True)
             if (pa.width, pa.height) != (pb.width, pb.height):
                 return False, f"page {i+1} size changed"
-            x = np.frombuffer(pa.samples, np.uint8).astype(np.int16)
-            y = np.frombuffer(pb.samples, np.uint8).astype(np.int16)
-            if i in scan_pages:                 # converted scan: paper is now white, compare structure
+            x = np.frombuffer(pa.samples, np.uint8).reshape(pa.height, pa.stride)[:, :pa.width].astype(np.int16)
+            y = np.frombuffer(pb.samples, np.uint8).reshape(pb.height, pb.stride)[:, :pb.width].astype(np.int16)
+            if i in scan_pages:                 # converted scan: paper is now white, compare ink
                 c = _corr(x, y)
                 if c < s["scan_min_corr"] - 0.05:
                     return False, f"page {i+1} (scan mode) failed legibility check (corr {c:.2f})"
+                ia, ib = _ink_map(x), _ink_map(y)
+                lost = _tile_means(ia & ~_grow(ib), t).max()
+                added = _tile_means(ib & ~_grow(ia), t).max()
+                if max(lost, added) > s["verify_ink_max_share"]:
+                    what = "lost" if lost >= added else "added"
+                    return False, (f"page {i+1} (scan mode) ink {what} in one area "
+                                   f"({100 * max(lost, added):.1f}% of a tile)")
                 continue
-            mae = float(np.abs(x - y).mean())
-            worst = max(worst, mae)
+            d = np.abs(x - y)
+            mae = float(d.mean())
+            # signed tile means: something missing makes a tile lighter, something added darker;
+            # removed scanner noise goes both ways and mostly cancels out
+            m = _tile_means(y - x, t)
+            tile = float(np.abs(m).max())
+            tile_abs = float(_tile_means(d, t).max())
+            worst = max(worst, tile)
             if check_text and a[i].get_text() != b[i].get_text():
                 return False, f"page {i+1} text changed"
             if mae > max_mae:
                 return False, f"page {i+1} looks different (diff {mae:.1f})"
+            if tile > max_tile:
+                what = "lighter (something missing?)" if m.max() >= -m.min() else "darker"
+                return False, f"page {i+1} is {what} in one area (tile diff {tile:.1f})"
+            if tile_abs > max_tile * 3:
+                return False, f"page {i+1} differs in one area (tile diff {tile_abs:.1f})"
         extra = f", {len(scan_pages)} rebuilt as text scans" if scan_pages else ""
-        return True, f"all {a.page_count} pages verified (max diff {worst:.2f}{extra})"
+        return True, f"all {a.page_count} pages verified (worst tile diff {worst:.2f}{extra})"
     finally:
         a.close(); b.close()
 
