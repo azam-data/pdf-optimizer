@@ -1,0 +1,105 @@
+{
+  "meta": {
+    "jbig2": false,
+    "ocr_available": false,
+    "pymupdf": "2.1",
+    "settings": {
+      "ocr": true,
+      "scan_mode": "auto"
+    },
+    "tolerance": 0.05
+  },
+  "samples": {
+    "cmyk_image.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 751389,
+      "size_out": 751389,
+      "status": "copied (no gain)"
+    },
+    "logo_seal.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 20968,
+      "size_out": 19941,
+      "status": "optimized"
+    },
+    "many_fonts.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 520148,
+      "size_out": 100133,
+      "status": "optimized"
+    },
+    "offset_cropbox.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 1,
+      "size_in": 1305548,
+      "size_out": 34999,
+      "status": "optimized"
+    },
+    "password_protected.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 3322,
+      "size_out": 3322,
+      "status": "copied (password protected)"
+    },
+    "photo_page.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 614070,
+      "size_out": 270351,
+      "status": "optimized"
+    },
+    "rotated_270.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 1,
+      "size_in": 1305687,
+      "size_out": 35170,
+      "status": "optimized"
+    },
+    "scan_bw.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 29497,
+      "size_out": 29049,
+      "status": "optimized"
+    },
+    "scan_color_sig_stamp.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 1,
+      "size_in": 473068,
+      "size_out": 60610,
+      "status": "optimized"
+    },
+    "scan_digital_pagenumber.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 1,
+      "size_in": 1304562,
+      "size_out": 34748,
+      "status": "optimized"
+    },
+    "scan_grey.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 1,
+      "size_in": 1448269,
+      "size_out": 54330,
+      "status": "optimized"
+    },
+    "scan_pastel_chart.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 1,
+      "size_in": 269854,
+      "size_out": 19476,
+      "status": "optimized"
+    },
+    "scan_stencil_mask.pdf": {
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 27327,
+      "size_out": 27327,
+      "status": "copied (no gain)"
+    }
+  }
+}

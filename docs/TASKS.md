@@ -3,7 +3,7 @@
 
 ## Phase 0: safety net (run these with the Phase 0 prompt, watching)
 - [x] P0.1 [you] tests/make_samples.py: generate the synthetic test PDFs listed in ROADMAP Phase 0
-- [ ] P0.2 [you] pytest suite + tests/baseline.json with expected sizes per sample and setting
+- [x] P0.2 [you] pytest suite + tests/baseline.json with expected sizes per sample and setting
 - [ ] P0.3 [auto] tools/build_notebooks.py builds notebooks/ from pdfopt_core.py; a test fails if they differ (E5)
 - [ ] P0.4 [auto] CI: run pytest on windows-latest in .github/workflows before building
 
