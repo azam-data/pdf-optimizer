@@ -51,7 +51,8 @@
   - 1-bit stencil masks (default Decode) are now classed bitonal and re-encoded losslessly; the /ImageMask flag is kept.
 - [x] M3 [auto] [baseline]
   - Oversized Indexed (palette) images are downsampled and stay palette images (original colours only, Flate); palette_image.pdf 97895 -> 40068 bytes.
-- [ ] Q3 [opus] [baseline]
+- [x] Q3 [opus] [baseline]
+  - Verification renders at 72 dpi and fails on the worst 0.5-inch tile (signed diff > 8); rebuilt scans compare ink maps (> 2% of a tile lost/added fails); scan_pastel_chart is now kept as the original.
 - [ ] Q1 [opus] [baseline]
 - [ ] Q2 [opus] [baseline]
 - [ ] R1 [opus]
