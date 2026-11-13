@@ -33,3 +33,9 @@ Users compress confidential bank PDFs, so correctness beats size.
 10. When done, tick the task in docs/TASKS.md. If blocked, add a line to docs/BLOCKED.md
     that starts with the task ID, then the reason; commit it and stop. Never guess on scan-mode quality.
 11. Never run --update-baseline in an [auto] task. If sizes must change, write the task ID and reason in docs/BLOCKED.md and stop.
+
+## Tool use in unattended runs
+- Run Python only as `python -m pytest ...`, `python tools/<script>.py` or `python tests/<script>.py`.
+  Never use `python3`, `.venv/bin/python`, `source`, or inline `python -c` / heredocs.
+- Put helper scripts in tools/ (committed), never in /tmp.
+- To inspect files (including notebooks) use the Read and Grep tools, not shell scripts.
