@@ -88,7 +88,7 @@ def run_folder(input_folder, output_folder, settings=None, jbig2_exe=None, skip_
             break
         rel = os.path.relpath(src, inp)
         is_pdf = src.lower().endswith(".pdf")
-        if skip_existing and os.path.exists(dst):
+        if skip_existing and os.path.exists(dst) and os.path.getsize(dst) > 0:
             rows.append(_row(rel, "pdf" if is_pdf else "other", "skipped (already in output)",
                              os.path.getsize(src), os.path.getsize(dst)))
             if is_pdf:
@@ -110,7 +110,7 @@ def run_folder(input_folder, output_folder, settings=None, jbig2_exe=None, skip_
                 raise OptimizerCancelled()
             if on_progress:
                 frac = ((_k - 1) + (done / total if total else 1)) / max(1, n_pdf)
-                what = "reading text (OCR)" if stage == "ocr" else "images"
+                what = {"ocr": "reading text (OCR)", "verify": "checking pages"}.get(stage, "images")
                 on_progress(frac, f"{_k}/{n_pdf}  {_rel}  -  {what} {done}/{total}")
         if on_progress:
             on_progress((k - 1) / max(1, n_pdf), f"{k}/{n_pdf}  {rel}")

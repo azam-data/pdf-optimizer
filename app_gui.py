@@ -2,6 +2,7 @@
 import json
 import os
 import queue
+import re
 import subprocess
 import sys
 import threading
@@ -18,6 +19,20 @@ MUTED = "#8a8a8a"
 
 
 # ------------------------------------------------------------------ helpers
+def clamp_geometry(geom, screen_w, screen_h, default="760x680"):
+    """Saved window geometry 'WxH+X+Y'; move it back on screen if a monitor was removed."""
+    m = re.fullmatch(r"(\d+)x(\d+)(?:([+-]-?\d+)([+-]-?\d+))?", str(geom))
+    if not m:
+        return default
+    w, h = int(m[1]), int(m[2])
+    if m[3] is None:
+        return f"{w}x{h}"
+    x, y = (int(v.replace("+-", "-").lstrip("+")) for v in (m[3], m[4]))
+    x = min(max(x, 0), max(0, screen_w - 100))
+    y = min(max(y, 0), max(0, screen_h - 100))
+    return f"{w}x{h}+{x}+{y}"
+
+
 def resource(*parts):
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base, *parts)
@@ -98,7 +113,8 @@ class App:
 
         root.title(APP_NAME)
         root.minsize(680, 600)
-        root.geometry(self.st.get("geometry", "760x680"))
+        root.geometry(clamp_geometry(self.st.get("geometry", "760x680"),
+                                     root.winfo_screenwidth(), root.winfo_screenheight()))
         self._build()
         self._load_fields()
         root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -318,6 +334,9 @@ class App:
                 self.q.put(("progress", frac * 0.5, f"Reading text (OCR) page {done + 1}/{total}"))
                 return
             base, span = (0.5, 0.4) if settings.get("ocr") else (0.0, 0.9)
+            if stage == "verify":
+                self.q.put(("progress", 0.9 + frac * 0.1, "Checking pages…"))
+                return
             txt = f"Processing images {done}/{total}" if done < total else "Checking pages…"
             self.q.put(("progress", base + frac * span, txt))
         try:

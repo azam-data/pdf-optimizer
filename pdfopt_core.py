@@ -845,7 +845,7 @@ def _optimize_images(doc, s, jbig2_exe, log, progress=None):
     return stats
 
 
-def _pages_match(path_a, path_b, s, max_mae=None, check_text=False, scan_pages=()):
+def _pages_match(path_a, path_b, s, max_mae=None, check_text=False, scan_pages=(), progress=None):
     max_mae = s["verify_max_mae"] if max_mae is None else max_mae
     a, b = pymupdf.open(path_a), pymupdf.open(path_b)
     try:
@@ -853,6 +853,8 @@ def _pages_match(path_a, path_b, s, max_mae=None, check_text=False, scan_pages=(
             return False, "page count changed"
         worst = 0.0
         for i in range(a.page_count):
+            if progress:
+                progress(i, a.page_count, "verify")      # may raise OptimizerCancelled
             pa = a[i].get_pixmap(dpi=s["verify_dpi"], colorspace=pymupdf.csGRAY, annots=True)
             pb = b[i].get_pixmap(dpi=s["verify_dpi"], colorspace=pymupdf.csGRAY, annots=True)
             if (pa.width, pa.height) != (pb.width, pb.height):
@@ -979,6 +981,8 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
                         raise
                     except Exception:
                         pass
+                if progress and todo:
+                    progress(len(todo), len(todo), "ocr")   # lets Cancel act after the last page
                 res["ocr_note"] = (f"{len(todo)} page(s) read" if todo
                                    else "no image-only pages (text already present)")
 
@@ -1025,7 +1029,10 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
     size_out = os.path.getsize(tmp)
     if s["verify_pages"]:
         try:
-            ok, msg = _pages_match(src, tmp, s, scan_pages=scan_pages)
+            ok, msg = _pages_match(src, tmp, s, scan_pages=scan_pages, progress=progress)
+        except OptimizerCancelled:
+            cleanup()
+            raise
         except Exception as e:
             ok, msg = False, f"verification error {e!r}"[:160]
         if not ok:
