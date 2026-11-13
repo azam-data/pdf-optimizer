@@ -51,6 +51,7 @@ DEFAULTS = dict(
     scan_dpi=300,            # resolution of the black/white text layer
     scan_min_dpi=150,        # scans below this are too coarse to binarize safely -> left to normal pass
     scan_min_cover=0.70,     # only images covering >= 70% of the page (i.e. page scans, not logos/photos)
+    scan_max_megapixels=40,  # pages larger than this at scan_dpi (A2 at 300 dpi is ~35) are not converted: memory
     scan_max_ink=0.30,
     scan_picture_min_blocks=12,  # >= ~1 cm2 of continuous mid-tones (logo, seal, photo) is kept as an image...
     scan_max_picture_share=0.35, # ...unless pictures cover > 35% of the page: then the page is not converted
@@ -353,20 +354,29 @@ def _optimize_fonts(doc, s):
 
 
 # --------------------------------------------------------------------------- scan mode
-def _sauvola(L, window, k, R=128.0):
-    """Adaptive threshold map (Sauvola) using integral images. L: float32 2-D array."""
+def _sauvola(L, window, k, R=128.0, rows=512):
+    """Adaptive threshold map (Sauvola) using integral images. L: float32 2-D array.
+    Computed in strips of `rows` output rows so the float64 integral images stay small
+    on very large scans (R1); the result equals the whole-page computation."""
     h, w = L.shape
     r = window // 2
-    P = np.pad(L, r + 1, mode="reflect").astype(np.float64)
-    I1 = P.cumsum(0).cumsum(1)
-    I2 = (P * P).cumsum(0).cumsum(1)
-    def boxsum(I):
-        return (I[window:window + h, window:window + w] - I[0:h, window:window + w]
-                - I[window:window + h, 0:w] + I[0:h, 0:w])
+    P = np.pad(L.astype(np.float32, copy=False), r + 1, mode="reflect")
+    out = np.empty((h, w), np.float32)
     n = float(window * window)
-    m = boxsum(I1) / n
-    v = np.maximum(boxsum(I2) / n - m * m, 0)
-    return (m * (1 + k * (np.sqrt(v) / R - 1))).astype(np.float32)
+    for y0 in range(0, h, max(1, int(rows))):
+        y1 = min(h, y0 + max(1, int(rows)))
+        sh = y1 - y0
+        S = P[y0:y1 + window].astype(np.float64)
+        I1 = S.cumsum(0).cumsum(1)
+        I2 = (S * S).cumsum(0).cumsum(1)
+        del S
+        def boxsum(I):
+            return (I[window:window + sh, window:window + w] - I[0:sh, window:window + w]
+                    - I[window:window + sh, 0:w] + I[0:sh, 0:w])
+        m = boxsum(I1) / n
+        v = np.maximum(boxsum(I2) / n - m * m, 0)
+        out[y0:y1] = m * (1 + k * (np.sqrt(v) / R - 1))
+    return out
 
 
 def _neighbours(b):
@@ -418,6 +428,7 @@ def _scan_convert(doc, xref, kind, dpi, s, jbig2_exe):
     if pix.n not in (1, 3):
         return None, "unsupported pixel format"
     src = Image.frombytes(mode, (pix.width, pix.height), pix.samples)
+    del pix                                             # R1: do not hold two copies of a large scan
     scale = s["scan_dpi"] / dpi
     scale = min(scale, 3.0)
     W, H = max(1, round(src.width * scale)), max(1, round(src.height * scale))
@@ -861,7 +872,16 @@ def _optimize_images(doc, s, jbig2_exe, log, progress=None):
             if (s["scan_mode"] != "off" and cls in ("rgb", "gray") and info["cover"] >= s["scan_min_cover"]
                     and dpi >= s["scan_min_dpi"] and _key(doc, xref, "SMask")[0] == "null"
                     and _key(doc, xref, "Mask")[0] == "null"):
-                r = _scan_convert(doc, xref, cls, dpi, s, jbig2_exe)
+                sc = min(s["scan_dpi"] / dpi, 3.0)                  # same size _scan_convert works at
+                mp = (w * sc) * (h * sc) / 1e6
+                if mp > s["scan_max_megapixels"]:
+                    r = (None, f"page too large for scan mode ({mp:.0f} MP at {s['scan_dpi']} dpi, "
+                               f"limit {s['scan_max_megapixels']:g} MP)")
+                else:
+                    try:
+                        r = _scan_convert(doc, xref, cls, dpi, s, jbig2_exe)
+                    except MemoryError:
+                        r = (None, f"out of memory ({mp:.0f} MP page)")
                 if r[0] is not None:
                     data, keys, mask_obj, note = r
                     new_total = len(data) + (len(mask_obj[1]) if mask_obj else 0)
@@ -914,6 +934,9 @@ def _optimize_images(doc, s, jbig2_exe, log, progress=None):
             log.append((xref, "changed", f"{note}: {human(len(old))} -> {human(len(data))}"))
         except OptimizerCancelled:
             raise
+        except MemoryError:
+            stats["kept"] += 1
+            log.append((xref, "error", "out of memory; image left as it was"))
         except Exception as e:
             stats["kept"] += 1
             log.append((xref, "error", repr(e)[:120]))
