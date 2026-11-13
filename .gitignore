@@ -15,3 +15,6 @@ settings.json
 
 .venv/
 logs/
+
+# generated test PDFs (tests/make_samples.py)
+tests/samples/
