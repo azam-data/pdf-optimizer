@@ -62,3 +62,28 @@ def test_M1_stencil_mask_image_is_processed(samples_dir, tmp_path):
     r = core.optimize_pdf(str(samples_dir / "scan_stencil_mask.pdf"), str(tmp_path / "out.pdf"),
                           dict(scan_mode="auto"))
     assert r["images_changed"] >= 1
+
+
+@pytest.mark.xfail(strict=True, reason="Q8: OCR runs, then the original is copied, so the output has no text layer")
+def test_Q8_ocr_text_survives_when_file_did_not_shrink(runs):
+    r = runs("scan_bw_tiny.pdf")
+    assert r["size_out"] <= 1.10 * r["size_in"]       # a text layer may add a little, never a lot
+    doc = pymupdf.open(r["_dst"])
+    try:
+        # OCR reads "Sample Bank Ltd - Statement of Account ..." on this sample (checked by hand)
+        assert doc[0].search_for("Statement"), "output has no OCR text layer"
+    finally:
+        doc.close()
+
+
+@pytest.mark.xfail(strict=True, reason="Q8: counters report work (scan/OCR/images) that was thrown away when the original is copied")
+def test_Q8_counters_are_zero_when_output_is_the_input(runs):
+    import make_samples
+    bad = {}
+    for name in sorted(make_samples.SAMPLES):
+        r = runs(name)
+        if r["identical_to_input"]:
+            counters = {k: r[k] for k in ("scan_pages", "ocr_pages", "images_changed") if r[k]}
+            if counters:
+                bad[name] = counters
+    assert not bad, bad

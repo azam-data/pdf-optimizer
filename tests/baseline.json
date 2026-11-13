@@ -1,16 +1,27 @@
 {
   "meta": {
     "jbig2": false,
-    "ocr_available": false,
+    "notes": {
+      "cmyk_image.pdf": "M2: CMYK images are skipped, so the file is copied",
+      "palette_image.pdf": "M3: palette (Indexed) images are skipped, so the file is copied",
+      "scan_bw_tiny.pdf": "already optimal, copied; Q8: OCR and images_changed counted although the original was copied",
+      "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",
+      "scan_pastel_chart.pdf": "Q1: pastel fills are erased by scan mode; baseline records the current (wrong) result",
+      "scan_stencil_mask.pdf": "M1: stencil-mask scans are skipped; Q8: OCR counted although the original was copied"
+    },
+    "ocr_available": true,
     "pymupdf": "2.1",
     "settings": {
       "ocr": true,
-      "scan_mode": "auto"
+      "scan_mode": "auto",
+      "use_jbig2": false
     },
     "tolerance": 0.05
   },
   "samples": {
     "cmyk_image.pdf": {
+      "identical_to_input": true,
+      "images_changed": 0,
       "ocr_pages": 0,
       "scan_pages": 0,
       "size_in": 751389,
@@ -18,13 +29,17 @@
       "status": "copied (no gain)"
     },
     "logo_seal.pdf": {
-      "ocr_pages": 0,
-      "scan_pages": 0,
-      "size_in": 20968,
-      "size_out": 19941,
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
+      "scan_pages": 1,
+      "size_in": 414695,
+      "size_out": 80868,
       "status": "optimized"
     },
     "many_fonts.pdf": {
+      "identical_to_input": false,
+      "images_changed": 0,
       "ocr_pages": 0,
       "scan_pages": 0,
       "size_in": 520148,
@@ -32,13 +47,26 @@
       "status": "optimized"
     },
     "offset_cropbox.pdf": {
-      "ocr_pages": 0,
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 1305548,
-      "size_out": 34999,
+      "size_out": 36410,
       "status": "optimized"
     },
+    "palette_image.pdf": {
+      "identical_to_input": true,
+      "images_changed": 0,
+      "ocr_pages": 0,
+      "scan_pages": 0,
+      "size_in": 97895,
+      "size_out": 97895,
+      "status": "copied (no gain)"
+    },
     "password_protected.pdf": {
+      "identical_to_input": true,
+      "images_changed": 0,
       "ocr_pages": 0,
       "scan_pages": 0,
       "size_in": 3322,
@@ -46,6 +74,8 @@
       "status": "copied (password protected)"
     },
     "photo_page.pdf": {
+      "identical_to_input": false,
+      "images_changed": 1,
       "ocr_pages": 0,
       "scan_pages": 0,
       "size_in": 614070,
@@ -53,27 +83,44 @@
       "status": "optimized"
     },
     "rotated_270.pdf": {
-      "ocr_pages": 0,
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
       "scan_pages": 1,
-      "size_in": 1305687,
-      "size_out": 35170,
+      "size_in": 1295197,
+      "size_out": 38761,
       "status": "optimized"
     },
     "scan_bw.pdf": {
-      "ocr_pages": 0,
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
       "scan_pages": 0,
-      "size_in": 29497,
-      "size_out": 29049,
+      "size_in": 975350,
+      "size_out": 60929,
       "status": "optimized"
     },
+    "scan_bw_tiny.pdf": {
+      "identical_to_input": true,
+      "images_changed": 1,
+      "ocr_pages": 1,
+      "scan_pages": 0,
+      "size_in": 29497,
+      "size_out": 29497,
+      "status": "copied (no gain)"
+    },
     "scan_color_sig_stamp.pdf": {
-      "ocr_pages": 0,
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 473068,
-      "size_out": 60610,
+      "size_out": 62280,
       "status": "optimized"
     },
     "scan_digital_pagenumber.pdf": {
+      "identical_to_input": false,
+      "images_changed": 1,
       "ocr_pages": 0,
       "scan_pages": 1,
       "size_in": 1304562,
@@ -81,21 +128,27 @@
       "status": "optimized"
     },
     "scan_grey.pdf": {
-      "ocr_pages": 0,
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 1448269,
-      "size_out": 54330,
+      "size_out": 56373,
       "status": "optimized"
     },
     "scan_pastel_chart.pdf": {
-      "ocr_pages": 0,
+      "identical_to_input": false,
+      "images_changed": 1,
+      "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 269854,
-      "size_out": 19476,
+      "size_out": 20701,
       "status": "optimized"
     },
     "scan_stencil_mask.pdf": {
-      "ocr_pages": 0,
+      "identical_to_input": true,
+      "images_changed": 0,
+      "ocr_pages": 1,
       "scan_pages": 0,
       "size_in": 27327,
       "size_out": 27327,

@@ -5,6 +5,7 @@ Only pymupdf, pillow and numpy. Fixed seeds: output is reproducible.
 Each sample is under 2 MB and shows the problem named in its file name.
 """
 import io
+import re
 import sys
 from pathlib import Path
 
@@ -42,7 +43,7 @@ def _paper(mode="L", bg=255):
     return Image.new(mode, (W, H), bg if mode == "L" else (bg, bg, bg))
 
 
-def _text_lines(d, fill, n=40, seed=1, x0=100, y0=140, size=26):
+def _text_lines(d, fill, n=40, seed=1, x0=100, y0=140, size=26, width=W):
     """Draw fake statement lines (table-like rows with amounts)."""
     r = _rng(seed)
     f = _font(size)
@@ -50,7 +51,7 @@ def _text_lines(d, fill, n=40, seed=1, x0=100, y0=140, size=26):
     for i in range(n):
         y = y0 + i * 36
         d.text((x0, y), f"{i + 1:03d}  12-Mar-2026  Transfer ref {int(r.integers(10**8, 10**9))}", font=f, fill=fill)
-        d.text((W - 380, y), f"{int(r.integers(100, 99999)):>8,}.00", font=f, fill=fill)
+        d.text((width - 380, y), f"{int(r.integers(100, 99999)):>8,}.00", font=f, fill=fill)
 
 
 def _speckle(img, seed, sigma=6):
@@ -80,17 +81,46 @@ def _new(path, img_bytes=None):
     return doc, page
 
 
+_ID = re.compile(rb"/ID\s*\[\s*<[0-9A-Fa-f]*>\s*<[0-9A-Fa-f]*>\s*\]")
+
+
 def _save(doc, path, **kw):
     doc.save(path, garbage=3, deflate=True, **kw)
     doc.close()
+    if "user_pw" not in kw and "owner_pw" not in kw:
+        # PyMuPDF writes a random trailer /ID, which made every run differ by a few bytes.
+        # The trailer sits after all offsets, so a fixed-text replacement keeps the file valid.
+        # (Encrypted files are skipped: the /ID is part of the key, and they stay fixed-size anyway.)
+        data = Path(path).read_bytes()
+        fixed = b"/ID[<" + b"00" * 16 + b"><" + b"11" * 16 + b">]"
+        Path(path).write_bytes(_ID.sub(lambda m: fixed, data))
 
 
-@sample("Black-and-white scan, 1-bit text page. Scan mode must keep it crisp and tiny.")
-def make_scan_bw(path):
+@sample("Tiny 1-bit text page at 150 dpi that is already optimal (Flate). Must be copied unchanged (Q8).")
+def make_scan_bw_tiny(path):
     img = _paper("L")
     _text_lines(ImageDraw.Draw(img), 0)
     img = _speckle(img, 2, 8).point(lambda v: 255 if v > 140 else 0).convert("1")
     doc, _ = _new(path, _png(img))
+    _save(doc, path)
+
+
+@sample("600 dpi noisy 1-bit text page stored as Flate (~1 MB). The bitonal path must re-encode it as CCITT-G4 and save a lot.")
+def make_scan_bw(path):
+    k = 4                                                   # 600 dpi = 4 x the 150 dpi canvas
+    img = Image.new("L", (W * k, H * k), 255)
+    d = ImageDraw.Draw(img)
+    r = _rng(15)
+    f = _font(26 * k)
+    d.text((100 * k, 60 * k), "Sample Bank Ltd - Statement of Account", font=_font(40 * k), fill=0)
+    for i in range(40):
+        y = (140 + i * 36) * k
+        d.text((100 * k, y), f"{i + 1:03d}  12-Mar-2026  Transfer ref {int(r.integers(10**8, 10**9))}", font=f, fill=0)
+        d.text(((W - 380) * k, y), f"{int(r.integers(100, 99999)):>8,}.00", font=f, fill=0)
+    a = np.asarray(img)
+    a = np.where(r.random(a.shape) < 0.014, 255 - a, a)     # salt-and-pepper scanner noise
+    img = Image.fromarray(a.astype(np.uint8)).point(lambda v: 255 if v > 128 else 0).convert("1")
+    doc, page = _new(path, _png(img))
     _save(doc, path)
 
 
@@ -116,22 +146,17 @@ def make_scan_color_sig_stamp(path):
     _save(doc, path)
 
 
-@sample("Real text page with a logo and a seal image. Vector text and the small images must stay intact.")
+@sample("Scanned page with a colour logo and a red seal. Scan mode must rebuild it with a picture layer that keeps both.")
 def make_logo_seal(path):
-    logo = Image.new("RGB", (400, 120), (255, 255, 255))
-    d = ImageDraw.Draw(logo)
-    d.rectangle((0, 0, 119, 119), fill=(0, 70, 140))
-    d.text((140, 40), "SAMPLE BANK", font=_font(36), fill=(0, 70, 140))
-    seal = Image.new("RGB", (300, 300), (255, 255, 255))
-    d = ImageDraw.Draw(seal)
-    d.ellipse((5, 5, 295, 295), outline=(150, 20, 40), width=6)
-    d.ellipse((40, 40, 260, 260), outline=(150, 20, 40), width=3)
-    d.text((95, 135), "OFFICIAL", font=_font(30), fill=(150, 20, 40))
-    doc, page = _new(path)
-    page.insert_image(pymupdf.Rect(50, 40, 250, 100), stream=_png(logo))
-    page.insert_image(pymupdf.Rect(400, 650, 530, 780), stream=_png(seal))
-    for i in range(40):
-        page.insert_text((50, 140 + i * 14), f"Line {i + 1}: payment advice for account 0012-3456-{i:04d}", fontsize=10)
+    img = _paper("RGB", 248)
+    d = ImageDraw.Draw(img)
+    _text_lines(d, (30, 30, 30), n=30, seed=14)
+    d.rectangle((90, 40, 250, 200), fill=(90, 150, 215))                      # logo block (mid-tone)
+    d.text((270, 100), "SAMPLE BANK", font=_font(48), fill=(0, 70, 140))
+    d.ellipse((820, 1300, 1120, 1600), fill=(235, 150, 160), outline=(150, 20, 40), width=6)   # seal (mid-tone)
+    d.ellipse((860, 1340, 1080, 1560), outline=(150, 20, 40), width=3)
+    d.text((910, 1435), "OFFICIAL", font=_font(34), fill=(150, 20, 40))
+    doc, _ = _new(path, _jpeg(_speckle(img, 14, 3), 88))
     _save(doc, path)
 
 
@@ -178,12 +203,24 @@ def make_scan_stencil_mask(path):
     _save(doc, path)
 
 
-@sample("Page with /Rotate 270 and text on a scan. Output must keep the same visual orientation.")
+ROT_WORD = "Sample"             # first word of the title, drawn at (100, 60) px on the displayed page
+ROT_W, ROT_H = H, W             # displayed page is landscape: 1754 x 1240 px at 150 dpi
+
+
+def rotated_word_rect():
+    """Where ROT_WORD is drawn, in points on the DISPLAYED page (top-left origin)."""
+    box = ImageDraw.Draw(Image.new("L", (1, 1))).textbbox((100, 60), ROT_WORD, font=_font(40))
+    sc = 72 / 150
+    return pymupdf.Rect(*(v * sc for v in box))
+
+
+@sample("Pure scan on a /Rotate 270 page (no real text). Output keeps its orientation and OCR boxes line up with the words.")
 def make_rotated_270(path):
-    img = _paper("L", 240)
-    _text_lines(ImageDraw.Draw(img), 30, n=25, seed=10)
-    doc, page = _new(path, _png(_speckle(img, 10, 4)))
-    page.insert_text((50, 30), "ROTATED 270", fontsize=14)
+    img = Image.new("L", (ROT_W, ROT_H), 240)
+    _text_lines(ImageDraw.Draw(img), 30, n=25, seed=10, width=ROT_W)
+    # the page is stored portrait and shown rotated 270: store the image turned the opposite way
+    stored = _speckle(img, 10, 4).rotate(-90, expand=True)
+    doc, page = _new(path, _png(stored))
     page.set_rotation(270)
     _save(doc, path)
 
@@ -226,7 +263,7 @@ def make_password_protected(path):
     _save(doc, path, encryption=pymupdf.PDF_ENCRYPT_AES_256, user_pw="test", owner_pw="owner")
 
 
-@sample("Embedded CMYK JPEG photo. Colours must stay right when recompressed (M3).")
+@sample("Embedded CMYK JPEG photo. Colours must stay right when recompressed (M2: CMYK images are skipped).")
 def make_cmyk_image(path):
     r = _rng(13)
     y, x = np.mgrid[0:600, 0:800]
@@ -236,6 +273,36 @@ def make_cmyk_image(path):
     doc, page = _new(path)
     page.insert_text((50, 60), "CMYK image below", fontsize=14)
     page.insert_image(pymupdf.Rect(50, 80, 450, 380), stream=_jpeg(img, 90))
+    _save(doc, path)
+
+
+@sample("Oversized indexed-colour (palette) screenshot, ~550 dpi on the page. Engine skips palette images today (M3).")
+def make_palette_image(path):
+    w, h = 3200, 2000
+    img = Image.new("RGB", (w, h), (245, 247, 250))
+    d = ImageDraw.Draw(img)
+    r = _rng(16)
+    d.rectangle((0, 0, w, 140), fill=(36, 99, 235))                          # title bar
+    d.text((40, 40), "Online Banking - Account Overview", font=_font(64), fill=(255, 255, 255))
+    d.rectangle((0, 140, 520, h), fill=(230, 234, 242))                      # side menu
+    for i, name in enumerate(["Accounts", "Transfers", "Cards", "Loans", "Statements", "Settings"]):
+        d.text((50, 200 + i * 110), name, font=_font(48), fill=(40, 50, 70))
+    for row in range(14):
+        y = 220 + row * 120
+        d.rectangle((580, y, w - 60, y + 100), fill=(255, 255, 255) if row % 2 == 0 else (238, 242, 250),
+                    outline=(205, 210, 222))
+        d.text((620, y + 28), f"2026-03-{row + 1:02d}  Payment ref {int(r.integers(10**7, 10**8))}", font=_font(44), fill=(30, 35, 50))
+        d.text((w - 560, y + 28), f"{int(r.integers(100, 99999)):>9,}.00", font=_font(44),
+               fill=(20, 140, 70) if row % 3 else (200, 40, 50))
+    img = img.quantize(colors=64, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)   # mode "P"
+    doc, page = _new(path)
+    page.insert_image(pymupdf.Rect(40, 60, 40 + 400, 60 + 250), stream=_png(img))
+    # PyMuPDF turns a palette PNG into ICCBased RGB; write it back as a real /Indexed image
+    xref = page.get_images()[0][0]
+    pal = img.getpalette()[:64 * 3]
+    doc.update_stream(xref, np.asarray(img, dtype=np.uint8).tobytes())
+    doc.xref_set_key(xref, "ColorSpace", "[/Indexed /DeviceRGB 63 <%s>]" % bytes(pal).hex())
+    doc.xref_set_key(xref, "SMask", "null")
     _save(doc, path)
 
 

@@ -5,6 +5,7 @@ Update the baseline (only when a task says results should change, and say why in
     python -m pytest tests/test_baseline.py --update-baseline
 """
 import json
+import os
 import shutil
 from pathlib import Path
 
@@ -16,12 +17,20 @@ import make_samples
 
 ROOT = Path(__file__).resolve().parent.parent
 BASELINE = ROOT / "tests" / "baseline.json"
-SETTINGS = dict(scan_mode="auto", ocr=True)
+from conftest import SETTINGS
 TOLERANCE = 0.05
 PASSWORD = "test"
 NAMES = sorted(make_samples.SAMPLES)
 
-_results = {}   # name -> result dict (filled as tests run, used by --update-baseline)
+# Known gaps, written into baseline.json for whoever reads it (not asserted).
+NOTES = {
+    "cmyk_image.pdf": "M2: CMYK images are skipped, so the file is copied",
+    "palette_image.pdf": "M3: palette (Indexed) images are skipped, so the file is copied",
+    "scan_stencil_mask.pdf": "M1: stencil-mask scans are skipped; Q8: OCR counted although the original was copied",
+    "scan_bw_tiny.pdf": "already optimal, copied; Q8: OCR and images_changed counted although the original was copied",
+    "scan_pastel_chart.pdf": "Q1: pastel fills are erased by scan mode; baseline records the current (wrong) result",
+    "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",
+}
 
 
 def _ocr_available():
@@ -30,20 +39,6 @@ def _ocr_available():
 
 def _load():
     return json.loads(BASELINE.read_text()) if BASELINE.exists() else {"samples": {}}
-
-
-@pytest.fixture(scope="module")
-def runs(samples_dir, tmp_path_factory):
-    out = tmp_path_factory.mktemp("out")
-
-    def run(name):
-        if name not in _results:
-            dst = out / name
-            r = core.optimize_pdf(str(samples_dir / name), str(dst), dict(SETTINGS), jbig2_exe=None)
-            r["_dst"] = dst
-            _results[name] = r
-        return _results[name]
-    return run
 
 
 @pytest.mark.parametrize("name", NAMES)
@@ -67,16 +62,31 @@ def test_sample(name, runs, samples_dir):
         pytest.fail(f"{name} missing from baseline.json (run with --update-baseline)")
     assert r["status"] == entry["status"]
     if entry["status"] != "optimized":
-        assert dst.read_bytes() == src.read_bytes()      # copied unchanged
+        assert r["identical_to_input"]                   # copied unchanged
 
-    # size within 5% of baseline. Sizes depend on whether OCR ran, so compare only like with like.
-    if base["meta"]["ocr_available"] != _ocr_available():
-        pytest.skip("baseline was made with ocr_available=%s, here it is %s"
-                    % (base["meta"]["ocr_available"], _ocr_available()))
+    # Sizes depend on OCR. Without eng.traineddata: skip locally, but fail on CI.
+    if not _ocr_available():
+        if os.environ.get("CI"):
+            pytest.fail("eng.traineddata not found (third_party/tessdata): CI must run the OCR baseline")
+        pytest.skip("eng.traineddata not found: size check skipped")
+    assert base["meta"]["ocr_available"], "baseline.json was made without OCR; regenerate it"
     assert abs(r["size_out"] - entry["size_out"]) <= TOLERANCE * entry["size_out"], \
         f"{name}: {r['size_out']} bytes vs baseline {entry['size_out']}"
     assert r["scan_pages"] == entry["scan_pages"]
     assert r["ocr_pages"] == entry["ocr_pages"]
+    assert r["images_changed"] == entry["images_changed"]
+    assert r["identical_to_input"] == entry["identical_to_input"]
+
+
+def test_jbig2_optional(samples_dir, tmp_path):
+    """JBIG2 path: only where a jbig2 executable exists. Output must still be valid and not larger."""
+    exe = core.find_jbig2()
+    if not exe:
+        pytest.skip("no jbig2 executable found")
+    src = samples_dir / "scan_bw.pdf"
+    r = core.optimize_pdf(str(src), str(tmp_path / "j.pdf"), dict(SETTINGS, use_jbig2=True), jbig2_exe=exe)
+    assert r["size_out"] <= r["size_in"]
+    assert pymupdf.open(tmp_path / "j.pdf").page_count == 1
 
 
 def test_write_baseline(request, runs):
@@ -84,9 +94,33 @@ def test_write_baseline(request, runs):
     if not request.config.getoption("--update-baseline"):
         pytest.skip("pass --update-baseline to rewrite tests/baseline.json")
     data = {"meta": {"settings": SETTINGS, "tolerance": TOLERANCE, "ocr_available": _ocr_available(),
-                     "jbig2": False, "pymupdf": pymupdf.__version__},
+                     "jbig2": False, "pymupdf": pymupdf.__version__, "notes": NOTES},
             "samples": {}}
     for name in NAMES:
         r = runs(name)
-        data["samples"][name] = {k: r[k] for k in ("status", "size_in", "size_out", "scan_pages", "ocr_pages")}
+        data["samples"][name] = {k: r[k] for k in ("status", "size_in", "size_out", "scan_pages", "ocr_pages", "images_changed", "identical_to_input")}
     BASELINE.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n")
+
+
+def test_rotated_270_ocr_boxes_line_up(runs):
+    """OCR on a /Rotate 270 pure scan: the hit for a known word sits where the word is drawn."""
+    r = runs("rotated_270.pdf")
+    assert r["scan_pages"] == 1 and r["ocr_pages"] == 1, "OCR must run on this page"
+    doc = pymupdf.open(r["_dst"])
+    try:
+        page = doc[0]
+        assert page.rotation == 270
+        hits = page.search_for(make_samples.ROT_WORD)
+        assert hits, "word not found: no OCR text layer"
+        want = make_samples.rotated_word_rect()
+        # search_for returns unrotated page coordinates; bring the hit to the displayed page.
+        # The hit box is the font's line box (taller than the glyphs), so compare the left and
+        # right edges and the vertical centre, each within 4 points.
+        got = min((h * page.rotation_matrix for h in hits),
+                  key=lambda g: abs(g.x0 - want.x0) + abs(g.y0 + g.y1 - want.y0 - want.y1))
+        centre = lambda q: (q.y0 + q.y1) / 2
+        assert abs(got.x0 - want.x0) <= 4, (got, want)
+        assert abs(got.x1 - want.x1) <= 4, (got, want)
+        assert abs(centre(got) - centre(want)) <= 4, (got, want)
+    finally:
+        doc.close()
