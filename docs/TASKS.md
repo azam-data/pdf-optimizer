@@ -57,7 +57,8 @@
   - Scan mode treats blocks that are mostly light-tinted or clearly coloured (not ink) as pictures; picture-area colour cells get their own colour, faint grey text stays grey; scan_pastel_chart now converts (269854 -> 70969 bytes) and passes verification.
 - [x] Q2 [opus] [baseline]
   - Scan mode now keeps blocks with mid-tone ink (60-88% of paper, away from dark strokes) as picture blocks, even small ones; new scan_pencil_note sample converts (404383 -> 77452 bytes) and keeps its pencil note and faint stamp.
-- [ ] R1 [opus]
+- [x] R1 [opus]
+  - Scan mode skips pages over 40 MP at scan_dpi with a clear log reason (normal pass still runs), computes the Sauvola threshold in 512-row strips (same result, far less memory), frees the decoded scan early, and logs "out of memory" instead of a bare MemoryError.
 - [ ] M2 [opus] [baseline]
 - [ ] CHECK1 [you] test the CI build on real documents on Windows; read docs/DECISIONS.md and logs/baseline_changes.txt
 
