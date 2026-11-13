@@ -61,6 +61,15 @@ def plan_folder(input_folder, output_folder):
     return inp, out, jobs
 
 
+def _remove_stale_temp(folder):
+    """Delete *.tmp_pdfopt / *.fonts_pdfopt left behind by a crashed or closed run."""
+    for root, _dirs, files in os.walk(folder):
+        for f in files:
+            if f.endswith((".tmp_pdfopt", ".fonts_pdfopt")):
+                try: os.remove(os.path.join(root, f))
+                except OSError: pass
+
+
 def run_folder(input_folder, output_folder, settings=None, jbig2_exe=None, skip_existing=False,
                email_limit_mb=10, on_file=None, on_progress=None, cancelled=None):
     """on_file(index, n_pdf, rel_path, row) is called after every PDF.
@@ -68,7 +77,8 @@ def run_folder(input_folder, output_folder, settings=None, jbig2_exe=None, skip_
     cancelled() -> bool is polled; when it returns True the run stops cleanly.
     Returns (rows, report_path, summary_text, was_cancelled)."""
     inp, out, jobs = plan_folder(input_folder, output_folder)
-    pdf_jobs = [j for j in jobs if j[0].lower().endswith(".pdf")]
+    _remove_stale_temp(out)
+    pdf_jobs =[j for j in jobs if j[0].lower().endswith(".pdf")]
     n_pdf = len(pdf_jobs)
     rows, k, t0, stopped = [], 0, time.time(), False
 
