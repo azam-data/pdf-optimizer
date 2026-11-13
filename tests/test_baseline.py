@@ -28,7 +28,7 @@ NOTES = {
     "palette_image.pdf": "M3: oversized palette images are downsampled, keeping a palette",
     "scan_stencil_mask.pdf": "M1: stencil mask is re-encoded losslessly, keeping /ImageMask",
     "scan_bw_tiny.pdf": "already optimal; Q8: kept because the OCR text layer adds <10%",
-    "scan_pastel_chart.pdf": "Q1: scan mode still damages the chart; Q3 verification now rejects it, so the original is kept",
+    "scan_pastel_chart.pdf": "Q1: pastel fills and highlighter are kept in the picture layer; scan mode passes verification",
     "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",
 }
 

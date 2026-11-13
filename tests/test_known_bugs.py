@@ -36,15 +36,17 @@ def _rgb_at(path, x_pt, y_pt):
         doc.close()
 
 
-@pytest.mark.xfail(strict=True, reason="Q1: scan mode erases pastel chart fills")
 def test_Q1_pastel_chart_survives_scan_mode(samples_dir, tmp_path):
     src = samples_dir / "scan_pastel_chart.pdf"
     dst = tmp_path / "out.pdf"
     r = core.optimize_pdf(str(src), str(dst), dict(scan_mode="auto"))
-    assert r["scan_pages"] == 1                      # scan mode did run on this page
+    assert r["scan_pages"] == 1, (r["status"], r["note"], r["image_log"])   # scan mode did run
     # first bar: pixel (240, 1100) at 150 dpi -> point (115, 528)
     before, after = _rgb_at(src, 115, 528), _rgb_at(dst, 115, 528)
     assert max(abs(a - b) for a, b in zip(before, after)) <= 12, f"bar colour {before} became {after}"
+    # highlighter band, away from its text: pixel (1000, 320) at 150 dpi -> point (480, 153)
+    before, after = _rgb_at(src, 480, 153), _rgb_at(dst, 480, 153)
+    assert max(abs(a - b) for a, b in zip(before, after)) <= 12, f"highlighter {before} became {after}"
 
 
 def test_Q4_scan_with_page_number_needs_ocr(samples_dir):

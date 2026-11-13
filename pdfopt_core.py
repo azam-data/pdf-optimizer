@@ -442,7 +442,13 @@ def _scan_convert(doc, xref, kind, dpi, s, jbig2_exe):
     h2, w2 = H // B * B, W // B * B
     mid = ((L > 0.25 * paper) & (L < 0.75 * paper)).astype(np.float32)
     mid_share = mid[:h2, :w2].reshape(h2 // B, B, w2 // B, B).mean(axis=(1, 3))
-    pic_blk = mid_share > 0.5
+    # flat light areas (pastel chart fills, shaded cells) and coloured areas (highlighter) are
+    # pictures too: mostly non-stroke pixels that are tinted or clearly coloured, not paper
+    sat = rgb.max(axis=2) - rgb.min(axis=2)
+    tinted = (L > 0.25 * paper) & (L < 0.95 * paper)
+    flat = (~ink & (tinted | (sat > 30))).astype(np.float32)
+    flat_share = flat[:h2, :w2].reshape(h2 // B, B, w2 // B, B).mean(axis=(1, 3))
+    pic_blk = (mid_share > 0.5) | (flat_share > 0.5)
     pic_blocks = int(pic_blk.sum())
     pic = None                       # pixels kept as a picture (logos, seals, photos), not binarized
     if pic_blocks >= s["scan_picture_min_blocks"]:
@@ -484,7 +490,8 @@ def _scan_convert(doc, xref, kind, dpi, s, jbig2_exe):
     if pic is not None:
         colour = True                                                   # pictures need the colour layer
     if pic is not None:
-        pic &= L < 0.92 * paper                     # inside pictures, paint only non-paper pixels:
+        area = pic.copy()                           # whole picture area (its colour cells get real colours)
+        pic &= (L < 0.92 * paper) | (sat > 30)      # inside pictures, paint only non-paper pixels:
     final = ink if pic is None else (ink | pic)     # no visible box edge, white text stays crisp
 
     img1 = Image.fromarray(np.where(final, 0, 255).astype(np.uint8)).convert("1")
@@ -525,16 +532,26 @@ def _scan_convert(doc, xref, kind, dpi, s, jbig2_exe):
     neutral = (col.max(axis=2) - col.min(axis=2)) < 60
     if pic is not None:
         pcell = np.asarray(Image.fromarray(pic.astype(np.float32)).resize((cw, ch), Image.BOX)) > 0.01
-        col[neutral & ~pcell] = 0                                        # neutral ink -> black
+        dark_blk = (ink & dark)[:h2, :w2].reshape(h2 // B, B, w2 // B, B).any(axis=(1, 3))
+        dark_blk = _grow(dark_blk)                                      # glyph edges next to dark cores
+        faint = np.zeros((H, W), np.float32)                            # light grey ink with no dark ink
+        faint[:h2, :w2] = np.repeat(np.repeat(~dark_blk, B, axis=0), B, axis=1)   # nearby (footnotes)
+        fcell = np.asarray(Image.fromarray(faint).resize((cw, ch), Image.BOX)) > 0.5
+        col[neutral & ~pcell & ~fcell] = 0                                     # neutral ink -> black
         pw = pic.astype(np.float32)                                      # average painted picture pixels only
         pden = np.asarray(Image.fromarray(pw).resize((cw, ch), Image.BOX), dtype=np.float32)
-        for i in range(3):
+        aw = area.astype(np.float32)               # unpainted cells of the picture area get the area's
+        aden = np.asarray(Image.fromarray(aw).resize((cw, ch), Image.BOX), dtype=np.float32)
+        for i in range(3):                         # own colour, not black (JPEG would darken the edges)
             white = float(np.percentile(rgb[:, :, i][nonink], 90)) if nonink.any() else 255.0
             pnum = np.asarray(Image.fromarray(np.ascontiguousarray(rgb[:, :, i] * pw)).resize((cw, ch), Image.BOX),
                               dtype=np.float32)
-            plain = np.where(pden > 0, pnum / np.maximum(pden, 1e-6), 255)
+            anum = np.asarray(Image.fromarray(np.ascontiguousarray(rgb[:, :, i] * aw)).resize((cw, ch), Image.BOX),
+                              dtype=np.float32)
+            plain = np.where(pden > 0, pnum / np.maximum(pden, 1e-6),
+                             np.where(aden > 0, anum / np.maximum(aden, 1e-6), 255))
             ci = col[:, :, i]
-            sel = pcell & (pden > 0)
+            sel = (pcell & (pden > 0)) | ((aden > 0) & (den <= 0))
             ci[sel] = np.clip(plain[sel] * 255.0 / max(white, 1), 0, 255)
         quality = max(s["scan_color_quality"], 75)
     else:
