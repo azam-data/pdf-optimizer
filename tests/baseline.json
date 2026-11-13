@@ -2,7 +2,7 @@
   "meta": {
     "jbig2": false,
     "notes": {
-      "cmyk_image.pdf": "M2: CMYK images are skipped, so the file is copied",
+      "cmyk_image.pdf": "M2: CMYK JPEG is re-encoded as CMYK JPEG (Adobe-inverted Decode kept)",
       "palette_image.pdf": "M3: oversized palette images are downsampled, keeping a palette",
       "scan_bw_tiny.pdf": "already optimal; Q8: kept because the OCR text layer adds <10%",
       "scan_digital_pagenumber.pdf": "Q4: real-text page number stops OCR",
@@ -21,13 +21,13 @@
   },
   "samples": {
     "cmyk_image.pdf": {
-      "identical_to_input": true,
-      "images_changed": 0,
+      "identical_to_input": false,
+      "images_changed": 1,
       "ocr_pages": 0,
       "scan_pages": 0,
       "size_in": 751389,
-      "size_out": 751389,
-      "status": "copied (no gain)"
+      "size_out": 643138,
+      "status": "optimized"
     },
     "logo_seal.pdf": {
       "identical_to_input": false,
@@ -125,7 +125,7 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 1304562,
-      "size_out": 36309,
+      "size_out": 36308,
       "status": "optimized"
     },
     "scan_grey.pdf": {

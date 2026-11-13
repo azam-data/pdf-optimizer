@@ -82,7 +82,10 @@ DEFAULTS = dict(
     min_file_gain=0.01,      # if the result is not at least 1% smaller, keep the original
 )
 
-_SKIP_CS = ("/Indexed", "/Separation", "/DeviceN", "/Lab", "/CalRGB", "/CalGray", "/Pattern")
+# Adobe (Photoshop/Pillow) CMYK JPEGs store inverted ink values; in a PDF they need this Decode array.
+CMYK_INVERTED = "[1 0 1 0 1 0 1 0]"
+
+_SKIP_CS = ("/Indexed","/Separation", "/DeviceN", "/Lab", "/CalRGB", "/CalGray", "/Pattern")
 
 
 # --------------------------------------------------------------------------- helpers
@@ -146,7 +149,7 @@ def _colorspace_kind(doc, xref):
         if s in cs:
             return ("skip", f"colour space {s[1:]}")
     if "/DeviceCMYK" in cs:
-        return ("skip", "CMYK")
+        return "cmyk"
     if "/DeviceGray" in cs:
         return "gray"
     if "/DeviceRGB" in cs:
@@ -155,7 +158,7 @@ def _colorspace_kind(doc, xref):
     if m:
         nt, nv = _key(doc, int(m.group(1)), "N")
         n = int(nv) if nt == "int" else 0
-        return {1: "gray", 3: "rgb"}.get(n, ("skip", f"ICC N={n}"))
+        return {1: "gray", 3: "rgb", 4: "cmyk"}.get(n, ("skip", f"ICC N={n}"))
     return ("skip", f"colour space {cs[:30]}")
 
 
@@ -176,7 +179,8 @@ def _classify(doc, xref):
     bpc = int(bv) if bt == "int" else 8
     if kind == "gray" and bpc == 1:
         return "bitonal"
-    if _key(doc, xref, "Decode")[0] != "null":
+    dt, dv = _key(doc, xref, "Decode")
+    if dt != "null" and not (kind == "cmyk" and dv.replace(" ", "") == CMYK_INVERTED.replace(" ", "")):
         return ("skip", "custom Decode array")
     return kind
 
@@ -788,10 +792,13 @@ def _process_contone(doc, xref, kind, eff_dpi, s, orig_filter):
     pix = pymupdf.Pixmap(doc, xref)
     if pix.alpha:
         pix = pymupdf.Pixmap(pix, 0)
-    n = 1 if kind == "gray" else 3
+    n, mode, dcs = {"gray": (1, "L", "DeviceGray"), "rgb": (3, "RGB", "DeviceRGB"),
+                    "cmyk": (4, "CMYK", "DeviceCMYK")}[kind]
     if pix.n != n:
         return None
-    mode = "L" if n == 1 else "RGB"
+    # CMYK: the pixmap holds true ink values (MuPDF applied any inverted /Decode). Pillow writes an
+    # Adobe (inverted) CMYK JPEG, so the new stream always gets CMYK_INVERTED, as img2pdf and
+    # PyMuPDF do; the decode check below proves the round trip.
     img = Image.frombytes(mode, (pix.width, pix.height), pix.samples)
     tgt = s["target_dpi_gray"] if kind == "gray" else s["target_dpi_color"]
     resized = False
@@ -804,13 +811,19 @@ def _process_contone(doc, xref, kind, eff_dpi, s, orig_filter):
         action = f"downsampled {eff_dpi:.0f}->{tgt} dpi"
     q, p95 = _gradient_quality(img, s)
     buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=q, optimize=True, subsampling=0 if s["jpeg_chroma_444"] else 2)
+    # CMYK has no luma/chroma split: subsampling would halve the K (text) plate, so keep 4:4:4
+    sub = 0 if (s["jpeg_chroma_444"] or n == 4) else 2
+    img.save(buf, format="JPEG", quality=q, optimize=True, subsampling=sub)
     data = buf.getvalue()
     keys = {"Filter": "/DCTDecode", "DecodeParms": "null", "Width": str(img.width),
             "Height": str(img.height), "BitsPerComponent": "8"}
+    dec = ""
+    if n == 4:
+        keys["Decode"] = CMYK_INVERTED
+        dec = f" /Decode {CMYK_INVERTED}"
     # sanity check: decode back and compare with what we meant to store
     base = (f"<< /Type /XObject /Subtype /Image /Width {img.width} /Height {img.height} "
-            f"/ColorSpace /{'DeviceGray' if n == 1 else 'DeviceRGB'} /BitsPerComponent 8 >>")
+            f"/ColorSpace /{dcs} /BitsPerComponent 8{dec} >>")
     got = _decode_test(base, data, {"Filter": "/DCTDecode"})
     want = np.asarray(img, dtype=np.uint8).reshape(img.height, img.width, n)
     if got.shape != want.shape or float(np.abs(got.astype(np.int16) - want).mean()) > 8:

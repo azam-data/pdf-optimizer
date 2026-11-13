@@ -24,7 +24,7 @@ NAMES = sorted(make_samples.SAMPLES)
 
 # Known gaps, written into baseline.json for whoever reads it (not asserted).
 NOTES = {
-    "cmyk_image.pdf": "M2: CMYK images are skipped, so the file is copied",
+    "cmyk_image.pdf": "M2: CMYK JPEG is re-encoded as CMYK JPEG (Adobe-inverted Decode kept)",
     "palette_image.pdf": "M3: oversized palette images are downsampled, keeping a palette",
     "scan_stencil_mask.pdf": "M1: stencil mask is re-encoded losslessly, keeping /ImageMask",
     "scan_bw_tiny.pdf": "already optimal; Q8: kept because the OCR text layer adds <10%",
