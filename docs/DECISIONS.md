@@ -1,0 +1,1 @@
+M3: palette images are downsampled only when oversized and stay palette images (nearest original colour, Flate); alternative was JPEG/RGB Flate, but JPEG blurs screenshot text and RGB Flate was bigger than the original.

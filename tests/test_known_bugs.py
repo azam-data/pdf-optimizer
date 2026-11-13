@@ -97,3 +97,20 @@ def test_Q8_counters_are_zero_when_output_is_the_input(runs):
             if counters:
                 bad[name] = counters
     assert not bad, bad
+
+
+def test_M3_palette_image_is_downsampled_and_renders_the_same(samples_dir, tmp_path):
+    src, dst = samples_dir / "palette_image.pdf", tmp_path / "out.pdf"
+    r = core.optimize_pdf(str(src), str(dst), dict(scan_mode="off", ocr=False), jbig2_exe=None)
+    assert r["images_changed"] >= 1, (r["status"], r["note"], r["image_log"])
+    assert r["size_out"] < 0.8 * r["size_in"]
+    a, b = pymupdf.open(src), pymupdf.open(dst)
+    try:
+        pa = a[0].get_pixmap(dpi=60, colorspace=pymupdf.csRGB)
+        pb = b[0].get_pixmap(dpi=60, colorspace=pymupdf.csRGB)
+        assert (pa.width, pa.height) == (pb.width, pb.height)
+        import numpy as np
+        d = np.abs(np.frombuffer(pa.samples, np.uint8).astype(int) - np.frombuffer(pb.samples, np.uint8).astype(int))
+        assert d.mean() < 4
+    finally:
+        a.close(); b.close()

@@ -136,6 +136,8 @@ def _colorspace_kind(doc, xref):
     cs = v
     if t == "xref":
         cs = doc.xref_object(int(v.split()[0]), compressed=True)
+    if cs.lstrip().startswith("[/Indexed") and re.search(r"/Indexed\s*/(DeviceRGB|CalRGB|DeviceGray)", cs):
+        return "indexed"
     for s in _SKIP_CS:
         if s in cs:
             return ("skip", f"colour space {s[1:]}")
@@ -713,6 +715,35 @@ def _process_bitonal(doc, xref, eff_dpi, s, jbig2_exe):
     return data, keys, f"{action} -> {name} (lossless, verified)"
 
 
+def _process_indexed(doc, xref, eff_dpi, s):
+    """Palette image: only touched when it is oversized. Expanded to RGB, resampled, stored with
+    Flate (no JPEG: screenshots keep sharp edges). Returns (data, keys, note) or None."""
+    tgt = s["target_dpi_color"]
+    if eff_dpi <= tgt * s["downsample_factor"]:
+        return None
+    pix = pymupdf.Pixmap(doc, xref)
+    if pix.alpha:
+        pix = pymupdf.Pixmap(pix, 0)
+    if pix.colorspace is None or pix.n != 3:
+        return None
+    img = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
+    sc = tgt / eff_dpi
+    img = img.resize((max(1, round(img.width * sc)), max(1, round(img.height * sc))), Image.LANCZOS)
+    # stay a palette image: snap every resampled pixel to the nearest ORIGINAL colour (no new colours)
+    cols = np.unique(np.frombuffer(pix.samples, np.uint8).reshape(-1, 3), axis=0)
+    if len(cols) > 256:
+        return None
+    pal = Image.new("P", (1, 1))
+    pal.putpalette(cols.astype(np.uint8).tobytes() + bytes(3 * (256 - len(cols))))
+    q = img.quantize(palette=pal, dither=Image.Dither.NONE)
+    data = zlib.compress(np.asarray(q, dtype=np.uint8).tobytes(), 9)
+    lookup = cols.astype(np.uint8).tobytes().hex()
+    keys = {"Filter": "/FlateDecode", "DecodeParms": "null", "Width": str(q.width),
+            "Height": str(q.height), "BitsPerComponent": "8",
+            "ColorSpace": "[/Indexed /DeviceRGB %d <%s>]" % (len(cols) - 1, lookup)}
+    return data, keys, f"palette downsampled {eff_dpi:.0f}->{tgt} dpi, colours kept"
+
+
 def _process_contone(doc, xref, kind, eff_dpi, s, orig_filter):
     pix = pymupdf.Pixmap(doc, xref)
     if pix.alpha:
@@ -827,6 +858,12 @@ def _optimize_images(doc, s, jbig2_exe, log, progress=None):
                 r = _process_bitonal(doc, xref, dpi, s, jbig2_exe)
                 if r is None:
                     stats["kept"] += 1; log.append((xref, "kept", "no verified encoding")); continue
+                data, keys, note = r
+                need = len(old)
+            elif cls == "indexed":
+                r = _process_indexed(doc, xref, dpi, s)
+                if r is None:
+                    stats["kept"] += 1; log.append((xref, "kept", "palette image not oversized")); continue
                 data, keys, note = r
                 need = len(old)
             else:
