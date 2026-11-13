@@ -731,7 +731,31 @@ def _process_contone(doc, xref, kind, eff_dpi, s, orig_filter):
     return data, keys, f"{action} -> JPEG q{q} (GED {p95:.0f})", resized
 
 
+MARK_KEY = "PdfOptimizer"
+
+
+def _info_xref(doc):
+    kind, val = doc.xref_get_key(-1, "Info")
+    return int(val.split()[0]) if kind == "xref" else 0
+
+
+def _is_marked(doc):
+    """True if this file is already the output of the optimizer."""
+    x = _info_xref(doc)
+    return bool(x) and doc.xref_get_key(x, MARK_KEY)[0] != "null"
+
+
+def _set_mark(doc):
+    x = _info_xref(doc)
+    if not x:
+        x = doc.get_new_xref()
+        doc.update_object(x, "<< >>")
+        doc.xref_set_key(-1, "Info", f"{x} 0 R")
+    doc.xref_set_key(x, MARK_KEY, "(1)")
+
+
 def _optimize_images(doc, s, jbig2_exe, log, progress=None):
+    marked = _is_marked(doc)         # output of an earlier run: never re-encode its JPEGs (lossy)
     plc = _placements(doc)
     stats = {"images": len(plc), "changed": 0, "skipped": 0, "kept": 0, "scan_xrefs": set()}
     for n_done, (xref, info) in enumerate(plc.items()):
@@ -754,6 +778,10 @@ def _optimize_images(doc, s, jbig2_exe, log, progress=None):
             old = doc.xref_stream_raw(xref) or b""
             ft, fv = _key(doc, xref, "Filter")
             orig_filter = fv if ft != "null" else ""
+            if marked and "DCTDecode" in orig_filter:
+                stats["kept"] += 1
+                log.append((xref, "kept", "JPEG already optimized by an earlier run"))
+                continue
             if (s["scan_mode"] != "off" and cls in ("rgb", "gray") and info["cover"] >= s["scan_min_cover"]
                     and dpi >= s["scan_min_dpi"] and _key(doc, xref, "SMask")[0] == "null"
                     and _key(doc, xref, "Mask")[0] == "null"):
@@ -974,6 +1002,7 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
                     doc.xref_set_key(page.xref, "Thumb", "null")
         if s["remove_xmp"]:
             doc.del_xml_metadata()
+        _set_mark(doc)
         _save(doc, tmp)
         doc.close()
     except OptimizerCancelled:
