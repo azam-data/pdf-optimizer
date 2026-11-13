@@ -32,3 +32,4 @@ Users compress confidential bank PDFs, so correctness beats size.
 9. Commit message: "<TASK ID>: <what changed>".
 10. When done, tick the task in docs/TASKS.md. If blocked, add a line to docs/BLOCKED.md
     that starts with the task ID, then the reason; commit it and stop. Never guess on scan-mode quality.
+11. Never run --update-baseline in an [auto] task. If sizes must change, write the task ID and reason in docs/BLOCKED.md and stop.

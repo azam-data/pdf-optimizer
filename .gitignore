@@ -18,3 +18,6 @@ logs/
 
 # generated test PDFs (tests/make_samples.py)
 tests/samples/
+
+# macOS
+.DS_Store

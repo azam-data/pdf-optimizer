@@ -5,7 +5,7 @@
 - [x] P0.1 [you] tests/make_samples.py: generate the synthetic test PDFs listed in ROADMAP Phase 0
 - [x] P0.2 [you] pytest suite + tests/baseline.json with expected sizes per sample and setting
 - [ ] P0.3 [auto] tools/build_notebooks.py builds notebooks/ from pdfopt_core.py; a test fails if they differ (E5)
-- [ ] P0.4 [auto] CI: run pytest on windows-latest in .github/workflows before building
+- [ ] P0.4 [auto] CI: run pytest on windows-latest before the build; download eng.traineddata in that job; tests must fail, not skip, when CI is set.
 
 ## Phase 1: bugs and small fixes
 - [ ] E1 [auto]
@@ -13,12 +13,13 @@
 - [ ] E3 [auto]
 - [ ] E4 [auto]
 - [ ] R3 [auto]
-- [ ] Q4 [auto]
 - [ ] Q5 [auto]
 - [ ] Q6 [auto]
 - [ ] Q7 [auto]
 - [ ] R2 [auto]
 - [ ] R4 [auto]
+- [ ] Q4 [you]
+- [ ] Q8 [you]
 
 ## Phase 2: scan-mode quality
 - [ ] Q3 [you]
@@ -27,8 +28,8 @@
 - [ ] R1 [you]
 
 ## Phase 3: missed savings
-- [ ] M1 [auto]
-- [ ] M3 [auto]
+- [ ] M1 [you]
+- [ ] M3 [you]
 - [ ] M2 [you]
 
 ## Phase 4: size

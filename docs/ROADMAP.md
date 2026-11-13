@@ -44,6 +44,7 @@ Nineteen issues, grouped by how serious they are. "Tested" means I reproduced it
 | Q5 | OCR writes non-Latin text (Bangla) as "?" words, and signatures as noise words. | In code | Drop words that are mostly "?" or symbols. | Sonnet |
 | Q6 | Running the optimizer on its own output re-encodes JPEGs again when it gains 10%, so quality erodes with each run. | In code | Mark optimized files in metadata; skip the lossy pass when the mark is present. | Sonnet |
 | Q7 | Font subsetting makes later text editing in Acrobat harder, and hinting removal thins text slightly in some viewers. The switches exist in the engine but not in the app. | Known | Add a "Keep fonts unchanged" checkbox. | Sonnet |
+| Q8 | On scan_bw and scan_stencil_mask, OCR ran and the result was discarded because the file didn’t shrink, so the output is the original with no text layer. The counters still say ocr_pages=1. A real user who ticks OCR on a small black-and-white scan gets an unsearchable file, and the log claims it is searchable.  |  Known|  Where OCR is on, the output should keep the text layer unless the file grows by more than about 10%, and the counters should be zero whenever the original is kept. | Sonnet |
 
 ### Missed savings
 
