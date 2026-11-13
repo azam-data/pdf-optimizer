@@ -925,7 +925,8 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
             shutil.copy2(src, dst)
         except OSError as e:
             return output_in_use(e)
-        res.update(status=status, note=note, size_out=size_in, saving_pct=0.0)
+        res.update(status=status, note=note, size_out=size_in, saving_pct=0.0,
+                   scan_pages=0, ocr_pages=0, images_changed=0)   # Q8: that work was thrown away
         res["seconds"] = round(time.time() - t0, 1)
         return res
 
@@ -1041,7 +1042,8 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
         if not ok:
             return keep_original("copied (verification failed)", msg)
         res["note"] = msg
-    if size_out > size_in * (1 - s["min_file_gain"]):
+    keep_text_layer = res["ocr_pages"] > 0 and size_out <= size_in * 1.10   # Q8: searchable text is worth a small growth
+    if size_out > size_in * (1 - s["min_file_gain"]) and not keep_text_layer:
         return keep_original("copied (no gain)", f"optimized would be {human(size_out)}")
     try:
         os.replace(tmp, dst)

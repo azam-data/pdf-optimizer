@@ -101,13 +101,13 @@
       "status": "optimized"
     },
     "scan_bw_tiny.pdf": {
-      "identical_to_input": true,
+      "identical_to_input": false,
       "images_changed": 1,
       "ocr_pages": 1,
       "scan_pages": 0,
       "size_in": 29497,
-      "size_out": 29497,
-      "status": "copied (no gain)"
+      "size_out": 31249,
+      "status": "optimized"
     },
     "scan_color_sig_stamp.pdf": {
       "identical_to_input": false,
@@ -146,13 +146,13 @@
       "status": "optimized"
     },
     "scan_stencil_mask.pdf": {
-      "identical_to_input": true,
+      "identical_to_input": false,
       "images_changed": 0,
       "ocr_pages": 1,
       "scan_pages": 0,
       "size_in": 27327,
-      "size_out": 27327,
-      "status": "copied (no gain)"
+      "size_out": 29599,
+      "status": "optimized"
     }
   }
 }

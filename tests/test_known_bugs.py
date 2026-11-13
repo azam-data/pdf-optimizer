@@ -62,7 +62,6 @@ def test_M1_stencil_mask_image_is_processed(samples_dir, tmp_path):
     assert r["images_changed"] >= 1
 
 
-@pytest.mark.xfail(strict=True, reason="Q8: OCR runs, then the original is copied, so the output has no text layer")
 def test_Q8_ocr_text_survives_when_file_did_not_shrink(runs):
     r = runs("scan_bw_tiny.pdf")
     assert r["size_out"] <= 1.10 * r["size_in"]       # a text layer may add a little, never a lot
@@ -74,7 +73,6 @@ def test_Q8_ocr_text_survives_when_file_did_not_shrink(runs):
         doc.close()
 
 
-@pytest.mark.xfail(strict=True, reason="Q8: counters report work (scan/OCR/images) that was thrown away when the original is copied")
 def test_Q8_counters_are_zero_when_output_is_the_input(runs):
     import make_samples
     bad = {}
