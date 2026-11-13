@@ -20,14 +20,36 @@ def _row(rel, typ, status, size_in, size_out, **kw):
     return r
 
 
+def _is_within(path, parent):
+    """True if path is parent or inside it. Case-insensitive on Windows (normcase), follows
+    symlinks (realpath), and also asks the file system (samefile) for case-insensitive volumes."""
+    p, q = os.path.normcase(os.path.realpath(path)), os.path.normcase(os.path.realpath(parent))
+    try:
+        if os.path.commonpath([p, q]) == q:
+            return True
+    except ValueError:        # different drives
+        return False
+    cur = os.path.realpath(path)
+    while True:
+        try:
+            if os.path.exists(cur) and os.path.samefile(cur, parent):
+                return True
+        except OSError:
+            pass
+        up = os.path.dirname(cur)
+        if up == cur:
+            return False
+        cur = up
+
+
 def plan_folder(input_folder, output_folder):
     """Validate the folders, create the mirrored folder tree, return the list of (src, dst) jobs."""
     inp, out = os.path.abspath(input_folder), os.path.abspath(output_folder)
     if not os.path.isdir(inp):
         raise FileNotFoundError(f"Input folder not found:\n{inp}")
-    if out == inp or out.startswith(inp + os.sep):
+    if _is_within(out, inp):
         raise ValueError("The output folder must not be the input folder or inside it.")
-    if inp.startswith(out + os.sep):
+    if _is_within(inp, out):
         raise ValueError("The input folder must not be inside the output folder.")
     jobs = []
     for dirpath, dirnames, filenames in os.walk(inp):

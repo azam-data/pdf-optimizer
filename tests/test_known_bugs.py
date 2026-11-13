@@ -17,7 +17,6 @@ def _case_insensitive_fs(tmp_path):
     return (tmp_path / "caseprobe").exists()
 
 
-@pytest.mark.xfail(strict=True, reason="E1: plan_folder compares paths case-sensitively")
 def test_E1_output_inside_input_different_case(tmp_path):
     if not _case_insensitive_fs(tmp_path):
         pytest.skip("needs a case-insensitive file system (Windows, default macOS)")
