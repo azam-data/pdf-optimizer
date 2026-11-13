@@ -860,9 +860,18 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
                 try: os.remove(p)
                 except Exception: pass
 
+    def output_in_use(e):
+        cleanup()
+        res.update(status="failed (output in use)", note=repr(e)[:160], size_out=0, saving_pct=0.0)
+        res["seconds"] = round(time.time() - t0, 1)
+        return res
+
     def keep_original(status, note):
         cleanup()
-        shutil.copy2(src, dst)
+        try:
+            shutil.copy2(src, dst)
+        except OSError as e:
+            return output_in_use(e)
         res.update(status=status, note=note, size_out=size_in, saving_pct=0.0)
         res["seconds"] = round(time.time() - t0, 1)
         return res
@@ -971,7 +980,10 @@ def optimize_pdf(src, dst, settings=None, jbig2_exe=None, progress=None):
         res["note"] = msg
     if size_out > size_in * (1 - s["min_file_gain"]):
         return keep_original("copied (no gain)", f"optimized would be {human(size_out)}")
-    os.replace(tmp, dst)
+    try:
+        os.replace(tmp, dst)
+    except OSError as e:                                # destination open in another program
+        return output_in_use(e)
     cleanup()
     res.update(status="optimized", size_out=size_out,
                saving_pct=round(100 * (1 - size_out / size_in), 1),

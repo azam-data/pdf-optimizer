@@ -110,9 +110,13 @@ def run_folder(input_folder, output_folder, settings=None, jbig2_exe=None, skip_
             stopped = True
             break
         except Exception as e:                          # last-resort safety: keep the mirror complete
-            shutil.copy2(src, dst)
             sz = os.path.getsize(src)
-            r = dict(status="copied (error)", size_in=sz, size_out=sz, saving_pct=0.0, note=str(e)[:160])
+            try:
+                shutil.copy2(src, dst)
+                r = dict(status="copied (error)", size_in=sz, size_out=sz, saving_pct=0.0, note=str(e)[:160])
+            except OSError as e2:
+                r = dict(status="failed (output in use)", size_in=sz, size_out=0, saving_pct=0.0,
+                         note=str(e2)[:160])
         row = _row(rel, "pdf", r["status"], r["size_in"], r["size_out"],
                    saving_pct=r.get("saving_pct", ""), scan_pages=r.get("scan_pages", ""),
                    ocr_pages=r.get("ocr_pages", ""),
