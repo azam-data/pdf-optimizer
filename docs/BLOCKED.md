@@ -1,1 +1,0 @@
-P0.3: running `python tools/build_notebooks.py` was denied (permission required, non-interactive session), so the notebooks could not be regenerated. Draft tools/build_notebooks.py and tests/test_notebooks.py are written but left uncommitted because the new test fails until the notebooks are rebuilt. The runner needs to allow `python tools/*.py`.
