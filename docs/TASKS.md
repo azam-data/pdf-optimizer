@@ -7,6 +7,7 @@
 - [x] P0.3 [auto] tools/build_notebooks.py builds notebooks/ from pdfopt_core.py; a test fails if they differ (E5) Decision: generate only the engine code cell in both notebooks, and leave the batch-logic cell of the Batch notebook alone.
   - Added tools/build_notebooks.py (engine cell only, `--check` mode) and tests/test_notebooks.py; notebooks regenerated.
 - [x] P0.4 [auto] CI: run pytest on windows-latest before the build; download eng.traineddata in that job; tests must fail, not skip, when CI is set; also trigger the workflow on push to any branch and on pull_request, keeping the release and manual triggers.
+- [x] P0.5 [you] find jbig2.exe in third_party/jbig2 (Windows CI fix)
   - Workflow triggers on push and pull_request, runs pytest (CI=true, after the tessdata download) before the build; the jbig2 test now fails instead of skipping on CI.
 
 ## Phase 1: bugs and small fixes

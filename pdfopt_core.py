@@ -105,6 +105,7 @@ def find_jbig2(path=None):
     """Return a working jbig2 executable path or None."""
     cands = [path] if path else (
         [os.path.join(d, n) for d in _app_dirs() for n in ("jbig2.exe", "jbig2")]
+        + [os.path.join(d, "third_party", "jbig2", n) for d in _app_dirs() for n in ("jbig2.exe", "jbig2")]
         + [shutil.which("jbig2"), shutil.which("jbig2.exe")])
     for c in cands:
         if c and os.path.isfile(c):
