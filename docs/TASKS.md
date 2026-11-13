@@ -18,7 +18,8 @@
   - run_folder now deletes leftover *.tmp_pdfopt / *.fonts_pdfopt files (recursively) in the output folder before starting; new test tests/test_leftover_temp.py. pdfopt_core.py unchanged, so no notebook regeneration.
 - [x] E4 [auto]
   - pdfopt-cli single-file mode exits 0 optimized, 3 original kept, 1 error; new `--json` prints the result with `exit_code`.
-- [ ] R3 [auto]
+- [x] R3 [auto]
+  - optimize_pdf copies PDFs that forbid modification ("copied (protected)") or that MuPDF had to repair ("copied (damaged)") unchanged; new tests/test_protected_damaged.py; notebooks regenerated.
 - [ ] Q5 [auto]
 - [ ] Q6 [auto]
 - [ ] Q7 [auto]
