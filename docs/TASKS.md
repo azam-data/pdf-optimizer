@@ -43,7 +43,8 @@
 ## Queue v2 (batched). [auto] = Sonnet, [opus] = Opus, [baseline] = may update tests/baseline.json, [you] = runner stops
 
 ### Batch 1: quality and missed savings
-- [ ] Q4 [auto] [baseline]
+- [x] Q4 [auto] [baseline]
+  - `_needs_ocr` now skips a page only when its existing text covers at least 10% of the page area; a stamped page number no longer blocks OCR.
 - [ ] Q8 [auto] [baseline] keep the OCR text layer unless the file grows by more than 10%; counters 0 when the original is kept
 - [ ] M1 [auto] [baseline]
 - [ ] M3 [auto] [baseline]
