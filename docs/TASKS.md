@@ -22,7 +22,8 @@
   - optimize_pdf copies PDFs that forbid modification ("copied (protected)") or that MuPDF had to repair ("copied (damaged)") unchanged; new tests/test_protected_damaged.py; notebooks regenerated.
 - [x] Q5 [auto]
   - OCR words that are half or more "?" or mostly symbols are dropped before the text layer is written (_clean_ocr_words); new tests/test_ocr_filter.py; notebooks regenerated.
-- [ ] Q6 [auto]
+- [x] Q6 [auto]
+  - Output files get a custom /PdfOptimizer key in the Info dict; when present, JPEG images are left untouched on re-runs (_is_marked/_set_mark); new tests/test_rerun_marker.py; notebooks regenerated.
 - [ ] Q7 [auto]
 - [ ] R2 [auto]
 - [ ] R4 [auto]
