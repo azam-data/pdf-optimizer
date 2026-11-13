@@ -576,9 +576,22 @@ def _ocr_words(page, tessdata, lang, dpi):
     o = pymupdf.open("pdf", pix.pdfocr_tobytes(language=lang, tessdata=tessdata))
     try:
         sx, sy = page.rect.width / o[0].rect.width, page.rect.height / o[0].rect.height
-        return [(w[0] * sx, w[1] * sy, w[2] * sx, w[3] * sy, w[4]) for w in o[0].get_text("words")]
+        return _clean_ocr_words([(w[0] * sx, w[1] * sy, w[2] * sx, w[3] * sy, w[4]) for w in o[0].get_text("words")])
     finally:
         o.close()
+
+
+def _clean_ocr_words(words):
+    """Drop OCR noise: words that are half or more '?' (unreadable non-Latin text) or mostly symbols."""
+    keep = []
+    for w in words:
+        t = w[4].strip()
+        if not t or t.count("?") * 2 >= len(t):
+            continue
+        if len(t) >= 2 and sum(c.isalnum() for c in t) < 0.4 * len(t):
+            continue
+        keep.append(w)
+    return keep
 
 
 def _add_text_layer(doc, page, words):
