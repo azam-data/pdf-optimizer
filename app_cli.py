@@ -3,9 +3,12 @@
   pdfopt-cli input.pdf [output.pdf]            single file (default output: <name>_optimized.pdf)
   pdfopt-cli INPUT_FOLDER OUTPUT_FOLDER         folder mode (mirror + report)
   options: --scan auto|bw|off   --grain 0-3   --ocr   --skip-existing
-Exit code: 0 = done (optimized or original kept), 1 = error, 2 = bad arguments.
+  --json prints the single-file result as JSON (with "exit_code").
+Exit code: 0 = optimized, 3 = original kept (copied), 1 = error, 2 = bad arguments.
+Folder mode returns 0 unless the run itself fails (see the report for per-file status).
 """
 import argparse
+import json
 import os
 import sys
 
@@ -20,6 +23,7 @@ def main(argv=None):
     p.add_argument("--grain", type=int, choices=[0, 1, 2, 3], default=2, help="grain removal 0-3 (default 2)")
     p.add_argument("--ocr", action="store_true", help="add a searchable English text layer to scanned pages")
     p.add_argument("--skip-existing", action="store_true", help="folder mode: skip files already in output")
+    p.add_argument("--json", action="store_true", help="single file: print the result as one JSON object")
     a = p.parse_args(argv)
     settings = {"scan_mode": a.scan, "scan_despeckle": a.grain, "ocr": a.ocr}
     jb = find_jbig2()
@@ -48,14 +52,22 @@ def main(argv=None):
     try:
         r = optimize_pdf(a.input, out, settings, jb)
     except Exception as e:
+        if a.json:
+            print(json.dumps({"status": "error", "error": str(e), "exit_code": 1}))
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
+    code = 0 if r["status"] == "optimized" else 1 if r["status"].startswith("failed") else 3
+    if a.json:
+        d = {k: v for k, v in r.items() if k != "image_log"}
+        d["exit_code"] = code
+        print(json.dumps(d, ensure_ascii=False, default=str))
+        return code
     print(f"{r['status']}: {human(r['size_in'])} -> {human(r['size_out'])} (saved {r['saving_pct']}%)")
     print(f"scanned pages rebuilt: {r.get('scan_pages', 0)} | {r['note']}")
     if a.ocr:
         print(f"OCR: {r.get('ocr_note') or '-'}")
     print(f"output: {r['output']}")
-    return 0
+    return code
 
 
 if __name__ == "__main__":
