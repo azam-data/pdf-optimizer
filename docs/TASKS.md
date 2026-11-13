@@ -10,7 +10,8 @@
   - Workflow triggers on push and pull_request, runs pytest (CI=true, after the tessdata download) before the build; the jbig2 test now fails instead of skipping on CI.
 
 ## Phase 1: bugs and small fixes
-- [ ] E1 [auto]
+- [x] E1 [auto]
+  - plan_folder now uses _is_within (normcase + realpath + commonpath + samefile), so a differently-cased output inside the input is rejected; xfail removed. The check rejects nested folders, so the walk never visits the output folder.
 - [ ] E2 [auto]
 - [ ] E3 [auto]
 - [ ] E4 [auto]
