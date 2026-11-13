@@ -22,8 +22,13 @@ while true; do
   log="logs/$(date +%Y%m%d-%H%M%S)-$task.json"
   echo "$(now) Starting $task (attempt $attempts), log: $log"
   prompt=$(sed "s/{TASK}/$task/g" tools/task_prompt.md)
+  before=$(git rev-parse HEAD)
   claude -p "$prompt" --model "$MODEL" --permission-mode acceptEdits \
     --allowedTools "$TOOLS" --max-turns 80 --output-format json > "$log" 2>&1
+  # Safety: an unattended task must never change the test baseline (committed or not).
+  if [ -n "$(git diff --name-only "$before" -- tests/baseline.json)" ]; then
+    echo "$(now) $task changed tests/baseline.json. Review: git diff $before -- tests/baseline.json"; break
+  fi
   if grep -qiE 'usage limit|limit reached|hit your limit' "$log"; then
     echo "$(now) Usage limit. Waiting 30 minutes, then retrying $task."
     attempts=$((attempts-1)); sleep 1800; continue
