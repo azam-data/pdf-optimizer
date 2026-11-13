@@ -34,7 +34,7 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 414695,
-      "size_out": 80868,
+      "size_out": 80921,
       "status": "optimized"
     },
     "many_fonts.pdf": {
@@ -43,7 +43,7 @@
       "ocr_pages": 0,
       "scan_pages": 0,
       "size_in": 520148,
-      "size_out": 100133,
+      "size_out": 100189,
       "status": "optimized"
     },
     "offset_cropbox.pdf": {
@@ -52,7 +52,7 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 1305548,
-      "size_out": 36410,
+      "size_out": 36464,
       "status": "optimized"
     },
     "palette_image.pdf": {
@@ -79,7 +79,7 @@
       "ocr_pages": 0,
       "scan_pages": 0,
       "size_in": 614070,
-      "size_out": 270351,
+      "size_out": 270403,
       "status": "optimized"
     },
     "rotated_270.pdf": {
@@ -88,7 +88,7 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 1295197,
-      "size_out": 38761,
+      "size_out": 38814,
       "status": "optimized"
     },
     "scan_bw.pdf": {
@@ -97,7 +97,7 @@
       "ocr_pages": 1,
       "scan_pages": 0,
       "size_in": 975350,
-      "size_out": 60929,
+      "size_out": 60981,
       "status": "optimized"
     },
     "scan_bw_tiny.pdf": {
@@ -115,16 +115,16 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 473068,
-      "size_out": 62280,
+      "size_out": 62333,
       "status": "optimized"
     },
     "scan_digital_pagenumber.pdf": {
       "identical_to_input": false,
       "images_changed": 1,
-      "ocr_pages": 0,
+      "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 1304562,
-      "size_out": 34748,
+      "size_out": 36309,
       "status": "optimized"
     },
     "scan_grey.pdf": {
@@ -133,7 +133,7 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 1448269,
-      "size_out": 56373,
+      "size_out": 56427,
       "status": "optimized"
     },
     "scan_pastel_chart.pdf": {
@@ -142,7 +142,7 @@
       "ocr_pages": 1,
       "scan_pages": 1,
       "size_in": 269854,
-      "size_out": 20701,
+      "size_out": 20754,
       "status": "optimized"
     },
     "scan_stencil_mask.pdf": {

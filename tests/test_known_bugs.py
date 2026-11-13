@@ -47,7 +47,6 @@ def test_Q1_pastel_chart_survives_scan_mode(samples_dir, tmp_path):
     assert max(abs(a - b) for a, b in zip(before, after)) <= 12, f"bar colour {before} became {after}"
 
 
-@pytest.mark.xfail(strict=True, reason="Q4: a digital 'Page 7' stamp stops OCR on a scanned page")
 def test_Q4_scan_with_page_number_needs_ocr(samples_dir):
     doc = pymupdf.open(samples_dir / "scan_digital_pagenumber.pdf")
     try:

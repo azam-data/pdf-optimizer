@@ -567,11 +567,13 @@ def find_tessdata(path=None, lang="eng"):
 
 
 def _needs_ocr(page):
-    """Pages that show a scan (big image) and have no text of their own."""
+    """Pages that show a scan (big image) and whose own text covers little of the page
+    (a stamped page number does not count as a text layer)."""
     try:
-        if page.get_text("words"):
-            return False
         parea = abs(page.rect)
+        covered = sum(abs(pymupdf.Rect(w[:4]) & page.rect) for w in page.get_text("words"))
+        if covered >= 0.10 * parea:
+            return False
         return any(abs(pymupdf.Rect(i["bbox"]) & page.rect) >= 0.5 * parea for i in page.get_image_info())
     except Exception:
         return False
